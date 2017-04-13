@@ -1,11 +1,11 @@
 #Beanbun
 简介
 ----
-Beanbun是一个简单可扩展的爬虫框架，基于[Workerman](http://www.workerman.net)。
+Beanbun 是一个简单可扩展的爬虫框架，支持守护进程模式与普通模式，守护进程模式基于 Workerman，下载器基于 Guzzle。
 
 特点
 ----
-- 支持守护进程与xx两种模式
+- 支持守护进程与普通两种模式
 - 默认使用guzzle进行爬取
 - 支持分布式
 - 支持内存、Redis等多种队列方式
@@ -18,7 +18,7 @@ Beanbun是一个简单可扩展的爬虫框架，基于[Workerman](http://www.wo
 安装
 ----
 ```
-$ composer require kiddyuchina/Beanbun
+$ composer require kiddyu/beanbun
 ```
 
 示例
