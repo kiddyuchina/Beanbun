@@ -23,7 +23,7 @@ class Db
      *
      * @var array
      */
-    protected static $config = array();
+    public static $config = array();
     protected static $instance = array();
     /**
      * 获取实例

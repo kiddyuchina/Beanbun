@@ -140,7 +140,7 @@ class Beanbun
             Worker::$stdoutFile = $this->logFile;
             \Beanbun\Lib\Db::closeAll();
 
-            $this->queueConfig['name'] = $this->name;
+            $this->queueArgs['name'] = $this->name;
             $this->initHooks();
             $this->command();
 
@@ -218,7 +218,7 @@ class Beanbun
     public function queue()
     {
         if ($this->queues == null) {
-            $this->$queues = call_user_func($this->queueFactory, $this->queueArgs);
+            $this->queues = call_user_func($this->queueFactory, $this->queueArgs);
         }
         return $this->queues;
     }
@@ -235,7 +235,7 @@ class Beanbun
         } elseif ($callback == 'redis') {
             $this->queueFactory = function ($args) {
                 return new \Beanbun\Queue\RedisQueue($args);
-            }
+            };
         } else {
             $this->queueFactory = $callback;
         }
@@ -255,7 +255,7 @@ class Beanbun
     {
         if ($callback === null) {
             $this->downloaderFactory = function ($args) {
-                return new Client;
+                return new Client($args);
             };
         } else {
             $this->downloaderFactory = $callback;
