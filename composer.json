@@ -13,7 +13,6 @@
     "require": {
         "php": ">=5.5.0",
         "workerman/workerman": "^3.3",
-        "imangazaliev/didom": "^1.8",
         "guzzlehttp/guzzle": "^6.0"
     },
     "autoload": {

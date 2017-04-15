@@ -27,15 +27,16 @@ class MemoryQueue implements QueueInterface
                 echo "\n";
                 exit;
             }
+            echo "Memory queue is starting...\n";
+            fclose(STDOUT);
+            $STDOUT = fopen(__DIR__.'/server.log', "a");
+
             self::$server[$key] = '';
         } elseif ($argv[1] == 'stop') {
             unset(self::$server[$key]);
         }
 
         $globalServer = new Server($ip, $port);
-        echo "Memory queue is starting...\n";
-        fclose(STDOUT);
-        $STDOUT = fopen(__DIR__.'/server.log', "a");
         Worker::$daemonize = true;
         Worker::$stdoutFile = __DIR__.'/server.log';
         @Worker::runAll();

@@ -23,6 +23,7 @@ class Db
      *
      * @var array
      */
+    protected static $config = array();
     protected static $instance = array();
     /**
      * 获取实例
@@ -33,8 +34,8 @@ class Db
      */
     public static function instance($config_name)
     {
-        $config = Helper::$dbConfig[$config_name];
         if (empty(self::$instance[$config_name])) {
+            $config = self::$config[$config_name];
             self::$instance[$config_name] = new \Beanbun\Lib\DbConnection($config['host'], $config['port'],
                 $config['user'], $config['password'], $config['dbname']);
         }

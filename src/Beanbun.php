@@ -21,8 +21,14 @@ class Beanbun
     public $interval = 5;
     public $timeout = 5;
     public $userAgent = 'pc';
-    public $queueConfig = [];
     public $logFile = '';
+    public $commands = [];
+
+    public $queue = '';
+    public $url = '';
+    public $method = '';
+    public $options = [];
+    public $page = '';
 
     public $startWorker = '';
     public $beforeDownloadPage = '';
@@ -41,7 +47,6 @@ class Beanbun
         'afterDiscoverHooks',
         'stopWorkerHooks',
     ];
-
     public $startWorkerHooks = [];
     public $beforeDownloadPageHooks = [];
     public $downloadPageHooks = [];
@@ -50,17 +55,15 @@ class Beanbun
     public $afterDiscoverHooks = [];
     public $stopWorkerHooks = [];
 
-    public $worker = null;
-    public $commands = [];
-    public $queue = '';
-    public $url = '';
-    public $method = '';
-    public $page = '';
-    public $options = [];
-    protected static $queues = null;
-    protected static $downloader = null;
-    protected static $parser = null;
+    protected $queues = null;
+    protected $downloader = null;
+    protected $worker = null;
     protected $timer_id = null;
+    protected $queueFactory = null;
+    protected $queueArgs = [];
+    protected $downloaderFactory = null;
+    protected $downloaderArgs = [];
+    protected $logFactory = null;
 
     public static function timer($interval, $callback, $args = [], $persistent = true)
     {
@@ -86,6 +89,8 @@ class Beanbun
             : current(explode('.', $this->commands[0]));
         $this->logFile = isset($config['logFile']) ? $config['logFile'] : __DIR__ . '/' . $this->name . '_access.log';
         $this->setQueue();
+        $this->setDownloader();
+        $this->setLog();
     }
 
     public function command()
@@ -93,9 +98,13 @@ class Beanbun
         switch ($this->commands[1]) {
             case 'start':
                 foreach ((array) $this->seed as $url) {
-                    $this->queue()->add($url);
+                    if (is_string($url)) {
+                        $this->queue()->add($url);
+                    } elseif (is_array($url)) {
+                        $this->queue()->add($url[0], $url[1]);
+                    }
                 }
-                self::$queues = null;
+                $this->queues = null;
                 echo "Beanbun is starting...\n";
                 fclose(STDOUT);
                 $STDOUT = fopen($this->logFile, "a");
@@ -129,6 +138,7 @@ class Beanbun
 
             Worker::$daemonize = true;
             Worker::$stdoutFile = $this->logFile;
+            \Beanbun\Lib\Db::closeAll();
 
             $this->queueConfig['name'] = $this->name;
             $this->initHooks();
@@ -142,7 +152,6 @@ class Beanbun
                 $this->crawler();
             }
         }
-        
     }
 
     public function initHooks()
@@ -208,45 +217,64 @@ class Beanbun
 
     public function queue()
     {
-        if (self::$queues == null) {
-            $class = $this->queueFactory;
-            self::$queues = new $class($this->queueConfig);
+        if ($this->queues == null) {
+            $this->$queues = call_user_func($this->queueFactory, $this->queueArgs);
         }
-        return self::$queues;
+        return $this->queues;
     }
 
-    public function setQueue($driver = 'memory', $args = [
+    public function setQueue($callback = null, $args = [
         'host' => '127.0.0.1',
         'port' => '2207',
     ])
     {
-        if ($driver == 'memory') {
-            $this->queueFactory = '\Beanbun\Queue\MemoryQueue';
-        } elseif ($driver == 'redis') {
-            $this->queueFactory = '\Beanbun\Queue\RedisQueue';
+        if ($callback === 'memory' || $callback === null) {
+            $this->queueFactory = function ($args) {
+                return new \Beanbun\Queue\MemoryQueue($args);
+            };
+        } elseif ($callback == 'redis') {
+            $this->queueFactory = function ($args) {
+                return new \Beanbun\Queue\RedisQueue($args);
+            }
         } else {
-            $this->queueFactory = $driver;
+            $this->queueFactory = $callback;
         }
         
-        $this->queueConfig = $args;
+        $this->queueArgs = $args;
     }
 
     public function downloader()
     {
-        if (self::$downloader == null) {
-            self::$downloader = new Client();
+        if ($this->downloader === null) {
+            $this->downloader = call_user_func($this->downloaderFactory, $this->downloaderArgs);
         }
-        return self::$downloader;
+        return $this->downloader;
     }
 
-    public function setDownloader($downloader)
+    public function setDownloader($callback = null, $args = [])
     {
-        self::$downloader = $downloader;
+        if ($callback === null) {
+            $this->downloaderFactory = function ($args) {
+                return new Client;
+            };
+        } else {
+            $this->downloaderFactory = $callback;
+        }
+        $this->downloaderArgs = $args;
     }
 
     public function log($msg)
     {
-        echo date('Y-m-d H:i:s') . " {$this->name} : $msg\n";
+        call_user_func($this->logFactory, $msg, $this);
+    }
+
+    public function setLog($callback = null)
+    {
+        $this->logFactory = $callback === null
+            ? function ($msg, $beanbun) {
+                echo date('Y-m-d H:i:s') . " {$beanbun->name} : $msg\n";
+            }
+            : $callback;
     }
 
     public function error($msg = null)
