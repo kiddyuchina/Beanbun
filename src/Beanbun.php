@@ -10,7 +10,7 @@ use Workerman\Worker;
 
 class Beanbun
 {
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
 
     public $id = null;
     public $name = null;

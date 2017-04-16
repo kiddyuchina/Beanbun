@@ -1,12 +1,8 @@
 <?php
 namespace Beanbun\Lib;
 
-Class Helper {
-
-	public static $data = '';
-	public static $curl = '';
-	public static $page = '';
-
+Class Helper
+{
 	public static $userAgent = [
 		'pc' => [
 			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
@@ -41,11 +37,11 @@ Class Helper {
 		$pattern = "'<\s*a\s.*?href\s*=\s*([\"\'])?(?(1) (.*?)\\1 | ([^\s\>]+))'isx";
         preg_match_all($pattern, $html, $match);
         $match = array_merge($match[2], $match[3]);
-        $hrefs = array_flip(array_flip($match));
+        $hrefs = array_flip(array_flip(array_filter($match)));
         foreach ($hrefs as $key => $href) {
         	$hrefs[$key] = self::formatUrl($href, $url);
         }
-        return $hrefs;
+        return array_flip(array_flip($hrefs));
 	}
 
 	public static function formatUrl($l1, $l2)

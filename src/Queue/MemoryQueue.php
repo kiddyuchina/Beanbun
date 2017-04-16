@@ -8,7 +8,7 @@ use Workerman\Worker;
 class MemoryQueue implements QueueInterface
 {
     public $globalData = null;
-    public $maxQueueSize = 0;
+    public $maxQueueSize = 10000;
     public $maxQueuedCount = 0;
 
     protected static $server = [];

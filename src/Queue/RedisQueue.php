@@ -5,7 +5,7 @@ class RedisQueue implements QueueInterface
 {
     public $redis = null;
     public $config = [];
-    public $maxQueueSize = 0;
+    public $maxQueueSize = 10000;
     public $maxQueuedCount = 0;
 
     protected $name = '';
