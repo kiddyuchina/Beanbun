@@ -1,7 +1,7 @@
 #Beanbun
 简介
 ----
-Beanbun 是一个简单可扩展的爬虫框架，支持分布式，支持守护进程模式与普通模式，守护进程模式基于 [Workerman](http://www.workerman.net)，下载器基于 [Guzzle](http://guzzle.org)。  
+Beanbun 是一个简单可扩展的爬虫框架，支持分布式，支持守护进程模式与普通模式，守护进程模式基于 [Workerman](http://www.workerman.net)，下载器基于 [Guzzle](http://guzzlephp.org)。  
 
 特点
 ----
