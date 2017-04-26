@@ -1,1779 +1,1049 @@
 <?php
 namespace Beanbun\Lib;
 
-use Exception;
 use PDO;
 use PDOException;
+use Exception;
 
 /**
- * 数据库连接类，依赖 PDO_MYSQL 扩展
- * 在 https://github.com/auraphp/Aura.SqlQuery 的基础上修改而成
+ * 数据库连接类，依赖相应的 PDO 扩展
+ * 在 Medoo (https://github.com/catfan/Medoo/) 的基础上修改而成
  */
 class DbConnection
 {
-    /**
-     * SELECT
-     *
-     * @var array
-     */
-    protected $union = array();
-    /**
-     * 是否是更新
-     *
-     * @var bool
-     */
-    protected $for_update = false;
-    /**
-     * 选择的列
-     *
-     * @var array
-     */
-    protected $cols = array();
-    /**
-     * 从哪些表里面 SELECT
-     *
-     * @var array
-     */
-    protected $from = array();
-    /**
-     * $from 当前的 key
-     *
-     * @var int
-     */
-    protected $from_key = -1;
-    /**
-     * GROUP BY 的列
-     *
-     * @var array
-     */
-    protected $group_by = array();
-    /**
-     * HAVING 条件数组.
-     *
-     * @var array
-     */
-    protected $having = array();
-    /**
-     * HAVING 语句中绑定的值.
-     *
-     * @var array
-     */
-    protected $bind_having = array();
-    /**
-     * 每页多少条记录
-     *
-     * @var int
-     */
-    protected $paging = 10;
-    /**
-     * sql 中绑定的值
-     *
-     * @var array
-     */
-    protected $bind_values = array();
-    /**
-     * WHERE 条件.
-     *
-     * @var array
-     */
-    protected $where = array();
-    /**
-     * WHERE 语句绑定的值
-     *
-     * @var array
-     */
-    protected $bind_where = array();
-    /**
-     * ORDER BY 的列
-     *
-     * @var array
-     */
-    protected $order_by = array();
-    /**
-     * ORDER BY 的排序方式,默认为升序
-     *
-     * @var bool
-     */
-    protected $order_asc = true;
-    /**
-     * SELECT 多少记录
-     *
-     * @var int
-     */
-    protected $limit = 0;
-    /**
-     * 返回记录的游标
-     *
-     * @var int
-     */
-    protected $offset = 0;
-    /**
-     * flags 列表
-     *
-     * @var array
-     */
-    protected $flags = array();
-    /**
-     * 操作哪个表
-     *
-     * @var string
-     */
-    protected $table;
-    /**
-     * 表.列 和 last-insert-id 映射
-     *
-     * @var array
-     */
-    protected $last_insert_id_names = array();
-    /**
-     * INSERT 或者 UPDATE 的列
-     *
-     * @param array
-     */
-    protected $col_values;
-    /**
-     * 返回的列
-     *
-     * @var array
-     */
-    protected $returning = array();
-    /**
-     * sql 的类型 SELECT INSERT DELETE UPDATE
-     *
-     * @var string
-     */
-    protected $type = '';
-    /**
-     * pdo 实例
-     *
-     * @var PDO
-     */
-    protected $pdo;
-    /**
-     * PDOStatement 实例
-     *
-     * @var \PDOStatement
-     */
-    protected $sQuery;
-    /**
-     * 数据库用户名密码等配置
-     *
-     * @var array
-     */
-    protected $settings = array();
-    /**
-     * sql 的参数
-     *
-     * @var array
-     */
-    protected $parameters = array();
-    /**
-     * 最后一条直行的 sql
-     *
-     * @var string
-     */
-    protected $lastSql = '';
-    /**
-     * 是否执行成功
-     *
-     * @var bool
-     */
-    protected $success = false;
-    /**
-     * 选择哪些列
-     *
-     * @param string|array $cols
-     * @return self
-     */
-    public function select($cols = '*')
+    // General
+    protected $database_type = 'mysql';
+    // Optional
+    protected $prefix;
+    protected $option = [];
+    // Variable
+    protected $logs = [];
+    protected $debug_mode = false;
+    public function __construct($options = null)
     {
-        $this->type = 'SELECT';
-        if (!is_array($cols)) {
-            $cols = array($cols);
-        }
-        $this->cols($cols);
-        return $this;
-    }
-    /**
-     * 从哪个表删除
-     *
-     * @param string $table
-     * @return self
-     */
-    public function delete($table)
-    {
-        $this->type = 'DELETE';
-        $this->table = $this->quoteName($table);
-        $this->fromRaw($this->quoteName($table));
-        return $this;
-    }
-    /**
-     * 更新哪个表
-     *
-     * @param string $table
-     * @return self
-     */
-    public function update($table)
-    {
-        $this->type = 'UPDATE';
-        $this->table = $this->quoteName($table);
-        return $this;
-    }
-    /**
-     * 向哪个表插入
-     *
-     * @param string $table
-     * @return self
-     */
-    public function insert($table)
-    {
-        $this->type = 'INSERT';
-        $this->table = $this->quoteName($table);
-        return $this;
-    }
-    /**
-     *
-     * 设置 SQL_CALC_FOUND_ROWS 标记.
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function calcFoundRows($enable = true)
-    {
-        $this->setFlag('SQL_CALC_FOUND_ROWS', $enable);
-        return $this;
-    }
-    /**
-     * 设置 SQL_CACHE 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function cache($enable = true)
-    {
-        $this->setFlag('SQL_CACHE', $enable);
-        return $this;
-    }
-    /**
-     * 设置 SQL_NO_CACHE 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function noCache($enable = true)
-    {
-        $this->setFlag('SQL_NO_CACHE', $enable);
-        return $this;
-    }
-    /**
-     * 设置 STRAIGHT_JOIN 标记.
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function straightJoin($enable = true)
-    {
-        $this->setFlag('STRAIGHT_JOIN', $enable);
-        return $this;
-    }
-    /**
-     * 设置 HIGH_PRIORITY 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function highPriority($enable = true)
-    {
-        $this->setFlag('HIGH_PRIORITY', $enable);
-        return $this;
-    }
-    /**
-     * 设置 SQL_SMALL_RESULT 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function smallResult($enable = true)
-    {
-        $this->setFlag('SQL_SMALL_RESULT', $enable);
-        return $this;
-    }
-    /**
-     * 设置 SQL_BIG_RESULT 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function bigResult($enable = true)
-    {
-        $this->setFlag('SQL_BIG_RESULT', $enable);
-        return $this;
-    }
-    /**
-     * 设置 SQL_BUFFER_RESULT 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function bufferResult($enable = true)
-    {
-        $this->setFlag('SQL_BUFFER_RESULT', $enable);
-        return $this;
-    }
-    /**
-     * 设置 FOR UPDATE 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function forUpdate($enable = true)
-    {
-        $this->for_update = (bool) $enable;
-        return $this;
-    }
-    /**
-     * 设置 DISTINCT 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function distinct($enable = true)
-    {
-        $this->setFlag('DISTINCT', $enable);
-        return $this;
-    }
-    /**
-     * 设置 LOW_PRIORITY 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function lowPriority($enable = true)
-    {
-        $this->setFlag('LOW_PRIORITY', $enable);
-        return $this;
-    }
-    /**
-     * 设置 IGNORE 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function ignore($enable = true)
-    {
-        $this->setFlag('IGNORE', $enable);
-        return $this;
-    }
-    /**
-     * 设置 QUICK 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function quick($enable = true)
-    {
-        $this->setFlag('QUICK', $enable);
-        return $this;
-    }
-    /**
-     * 设置 DELAYED 标记
-     *
-     * @param bool $enable
-     * @return self
-     */
-    public function delayed($enable = true)
-    {
-        $this->setFlag('DELAYED', $enable);
-        return $this;
-    }
-    /**
-     * 序列化
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        $union = '';
-        if ($this->union) {
-            $union = implode(' ', $this->union) . ' ';
-        }
-        return $union . $this->build();
-    }
-    /**
-     * 设置每页多少条记录
-     *
-     * @param int $paging
-     * @return self
-     */
-    public function setPaging($paging)
-    {
-        $this->paging = (int) $paging;
-        return $this;
-    }
-    /**
-     * 获取每页多少条记录
-     *
-     * @return int
-     */
-    public function getPaging()
-    {
-        return $this->paging;
-    }
-    /**
-     * 获取绑定在占位符上的值
-     */
-    public function getBindValues()
-    {
-        switch ($this->type) {
-            case 'SELECT':
-                return $this->getBindValuesSELECT();
-            case 'DELETE':
-            case 'UPDATE':
-            case 'INSERT':
-                return $this->getBindValuesCOMMON();
-            default:
-                throw new Exception("type err");
-        }
-    }
-    /**
-     * 获取绑定在占位符上的值
-     *
-     * @return array
-     */
-    public function getBindValuesSELECT()
-    {
-        $bind_values = $this->bind_values;
-        $i = 1;
-        foreach ($this->bind_where as $val) {
-            $bind_values[$i] = $val;
-            $i++;
-        }
-        foreach ($this->bind_having as $val) {
-            $bind_values[$i] = $val;
-            $i++;
-        }
-        return $bind_values;
-    }
-    /**
-     *
-     * SELECT选择哪些列
-     *
-     * @param mixed  $key
-     * @param string $val
-     * @return void
-     */
-    protected function addColSELECT($key, $val)
-    {
-        if (is_string($key)) {
-            $this->cols[$val] = $key;
-        } else {
-            $this->addColWithAlias($val);
-        }
-    }
-    /**
-     * SELECT 增加选择的列
-     *
-     * @param string $spec
-     */
-    protected function addColWithAlias($spec)
-    {
-        $parts = explode(' ', $spec);
-        $count = count($parts);
-        if ($count == 2) {
-            $this->cols[$parts[1]] = $parts[0];
-        } elseif ($count == 3 && strtoupper($parts[1]) == 'AS') {
-            $this->cols[$parts[2]] = $parts[0];
-        } else {
-            $this->cols[] = $spec;
-        }
-    }
-    /**
-     * from 哪个表
-     *
-     * @param string $table
-     * @return self
-     */
-    public function from($table)
-    {
-        return $this->fromRaw($this->quoteName($table));
-    }
-    /**
-     * from的表
-     *
-     * @param string $table
-     * @return self
-     */
-    public function fromRaw($table)
-    {
-        $this->from[] = array($table);
-        $this->from_key++;
-        return $this;
-    }
-    /**
-     *
-     * 子查询
-     *
-     * @param string $table
-     * @param string $name The alias name for the sub-select.
-     * @return self
-     */
-    public function fromSubSelect($table, $name)
-    {
-        $this->from[] = array("($table) AS " . $this->quoteName($name));
-        $this->from_key++;
-        return $this;
-    }
-    /**
-     * 增加 join 语句
-     *
-     * @param string $table
-     * @param string $cond
-     * @param string $type
-     * @return self
-     * @throws Exception
-     */
-    public function join($table, $cond = null, $type = '')
-    {
-        return $this->joinInternal($type, $table, $cond);
-    }
-    /**
-     * 增加 join 语句
-     *
-     * @param string $join inner, left, natural
-     * @param string $table
-     * @param string $cond
-     * @return self
-     * @throws Exception
-     */
-    protected function joinInternal($join, $table, $cond = null)
-    {
-        if (!$this->from) {
-            throw new Exception('Cannot join() without from()');
-        }
-        $join = strtoupper(ltrim("$join JOIN"));
-        $table = $this->quoteName($table);
-        $cond = $this->fixJoinCondition($cond);
-        $this->from[$this->from_key][] = rtrim("$join $table $cond");
-        return $this;
-    }
-    /**
-     * quote
-     *
-     * @param string $cond
-     * @return string
-     *
-     */
-    protected function fixJoinCondition($cond)
-    {
-        if (!$cond) {
-            return '';
-        }
-        $cond = $this->quoteNamesIn($cond);
-        if (strtoupper(substr(ltrim($cond), 0, 3)) == 'ON ') {
-            return $cond;
-        }
-        if (strtoupper(substr(ltrim($cond), 0, 6)) == 'USING ') {
-            return $cond;
-        }
-        return 'ON ' . $cond;
-    }
-    /**
-     * inner join
-     *
-     * @param string $table
-     * @param string $cond
-     * @return self
-     * @throws Exception
-     */
-    public function innerJoin($table, $cond = null)
-    {
-        return $this->joinInternal('INNER', $table, $cond);
-    }
-    /**
-     * left join
-     *
-     * @param string $table
-     * @param string $cond
-     * @return self
-     * @throws Exception
-     */
-    public function leftJoin($table, $cond = null)
-    {
-        return $this->joinInternal('LEFT', $table, $cond);
-    }
-    /**
-     * right join
-     *
-     * @param string $table
-     * @param string $cond
-     * @return self
-     * @throws Exception
-     */
-    public function rightJoin($table, $cond = null)
-    {
-        return $this->joinInternal('RIGHT', $table, $cond);
-    }
-    /**
-     * joinSubSelect
-     *
-     * @param string $join inner, left, natural
-     * @param string $spec
-     * @param string $name sub-select 的别名
-     * @param string $cond
-     * @return self
-     * @throws Exception
-     */
-    public function joinSubSelect($join, $spec, $name, $cond = null)
-    {
-        if (!$this->from) {
-            throw new \Exception('Cannot join() without from() first.');
-        }
-        $join = strtoupper(ltrim("$join JOIN"));
-        $name = $this->quoteName($name);
-        $cond = $this->fixJoinCondition($cond);
-        $this->from[$this->from_key][] = rtrim("$join ($spec) AS $name $cond");
-        return $this;
-    }
-    /**
-     * group by 语句
-     *
-     * @param array $cols
-     * @return self
-     */
-    public function groupBy(array $cols)
-    {
-        foreach ($cols as $col) {
-            $this->group_by[] = $this->quoteNamesIn($col);
-        }
-        return $this;
-    }
-    /**
-     * having 语句
-     *
-     * @param string $cond
-     * @return self
-     */
-    public function having($cond)
-    {
-        $this->addClauseCondWithBind('having', 'AND', func_get_args());
-        return $this;
-    }
-    /**
-     * or having 语句
-     *
-     * @param string $cond The HAVING condition.
-     * @return self
-     */
-    public function orHaving($cond)
-    {
-        $this->addClauseCondWithBind('having', 'OR', func_get_args());
-        return $this;
-    }
-    /**
-     * 设置每页的记录数量
-     *
-     * @param int $page
-     * @return self
-     */
-    public function page($page)
-    {
-        $this->limit = 0;
-        $this->offset = 0;
-        $page = (int) $page;
-        if ($page > 0) {
-            $this->limit = $this->paging;
-            $this->offset = $this->paging * ($page - 1);
-        }
-        return $this;
-    }
-    /**
-     * union
-     *
-     * @return self
-     */
-    public function union()
-    {
-        $this->union[] = $this->build() . ' UNION';
-        $this->reset();
-        return $this;
-    }
-    /**
-     * unionAll
-     *
-     * @return self
-     */
-    public function unionAll()
-    {
-        $this->union[] = $this->build() . ' UNION ALL';
-        $this->reset();
-        return $this;
-    }
-    /**
-     * 重置
-     */
-    protected function reset()
-    {
-        $this->resetFlags();
-        $this->cols = array();
-        $this->from = array();
-        $this->from_key = -1;
-        $this->where = array();
-        $this->group_by = array();
-        $this->having = array();
-        $this->order_by = array();
-        $this->limit = 0;
-        $this->offset = 0;
-        $this->for_update = false;
-    }
-    /**
-     * 清除所有数据
-     */
-    protected function resetAll()
-    {
-        $this->union = array();
-        $this->for_update = false;
-        $this->cols = array();
-        $this->from = array();
-        $this->from_key = -1;
-        $this->group_by = array();
-        $this->having = array();
-        $this->bind_having = array();
-        $this->paging = 10;
-        $this->bind_values = array();
-        $this->where = array();
-        $this->bind_where = array();
-        $this->order_by = array();
-        $this->limit = 0;
-        $this->offset = 0;
-        $this->flags = array();
-        $this->table = '';
-        $this->last_insert_id_names = array();
-        $this->col_values = array();
-        $this->returning = array();
-        $this->parameters = array();
-    }
-    /**
-     * 创建 SELECT SQL
-     *
-     * @return string
-     */
-    protected function buildSELECT()
-    {
-        return 'SELECT'
-        . $this->buildFlags()
-        . $this->buildCols()
-        . $this->buildFrom()
-        . $this->buildWhere()
-        . $this->buildGroupBy()
-        . $this->buildHaving()
-        . $this->buildOrderBy()
-        . $this->buildLimit()
-        . $this->buildForUpdate();
-    }
-    /**
-     * 创建 DELETE SQL
-     */
-    protected function buildDELETE()
-    {
-        return 'DELETE'
-        . $this->buildFlags()
-        . $this->buildFrom()
-        . $this->buildWhere()
-        . $this->buildOrderBy()
-        . $this->buildLimit()
-        . $this->buildReturning();
-    }
-    /**
-     * 生成 SELECT 列语句
-     *
-     * @return string
-     * @throws Exception
-     */
-    protected function buildCols()
-    {
-        if (!$this->cols) {
-            throw new Exception('No columns in the SELECT.');
-        }
-        $cols = array();
-        foreach ($this->cols as $key => $val) {
-            if (is_int($key)) {
-                $cols[] = $this->quoteNamesIn($val);
-            } else {
-                $cols[] = $this->quoteNamesIn("$val AS $key");
-            }
-        }
-        return $this->indentCsv($cols);
-    }
-    /**
-     * 生成 FROM 语句.
-     *
-     * @return string
-     */
-    protected function buildFrom()
-    {
-        if (!$this->from) {
-            return '';
-        }
-        $refs = array();
-        foreach ($this->from as $from) {
-            $refs[] = implode(' ', $from);
-        }
-        return ' FROM' . $this->indentCsv($refs);
-    }
-    /**
-     * 生成 GROUP BY 语句.
-     *
-     * @return string
-     */
-    protected function buildGroupBy()
-    {
-        if (!$this->group_by) {
-            return '';
-        }
-        return ' GROUP BY' . $this->indentCsv($this->group_by);
-    }
-    /**
-     * 生成 HAVING 语句.
-     *
-     * @return string
-     */
-    protected function buildHaving()
-    {
-        if (!$this->having) {
-            return '';
-        }
-        return ' HAVING' . $this->indent($this->having);
-    }
-    /**
-     * 生成 FOR UPDATE 语句
-     *
-     * @return string
-     */
-    protected function buildForUpdate()
-    {
-        if (!$this->for_update) {
-            return '';
-        }
-        return ' FOR UPDATE';
-    }
-    /**
-     * where
-     *
-     * @param string|array $cond
-     * @return self
-     */
-    public function where($cond)
-    {
-        if (is_array($cond)) {
-            foreach ($cond as $key => $val) {
-                if (is_string($key)) {
-                    $this->addWhere('AND', array($key, $val));
-                } else {
-                    $this->addWhere('AND', array($val));
+        try {
+            if (is_array($options))
+            {
+                if (isset($options['database_type']))
+                {
+                    $this->database_type = strtolower($options['database_type']);
+                }
+                if (!isset($option['charset'])) {
+                    $option['charset'] = 'utf'
                 }
             }
-        } else {
-            $this->addWhere('AND', func_get_args());
-        }
-        return $this;
-    }
-    /**
-     * or where
-     *
-     * @param string|array $cond
-     * @return self
-     */
-    public function orWhere($cond)
-    {
-        if (is_array($cond)) {
-            foreach ($cond as $key => $val) {
-                if (is_string($key)) {
-                    $this->addWhere('OR', array($key, $val));
-                } else {
-                    $this->addWhere('OR', array($val));
+            else
+            {
+                return false;
+            }
+            if (isset($options['prefix']))
+            {
+                $this->prefix = $options['prefix'];
+            }
+            if (isset($options['option']))
+            {
+                $this->option = $options['option'];
+            }
+            if (isset($options['command']) && is_array($options['command']))
+            {
+                $commands = $options['command'];
+            }
+            else
+            {
+                $commands = [];
+            }
+            if (isset($options['dsn']))
+            {
+                if (isset($options['dsn']['driver']))
+                {
+                    $attr = $options['dsn'];
+                }
+                else
+                {
+                    return false;
                 }
             }
-        } else {
-            $this->addWhere('OR', func_get_args());
-        }
-        return $this;
-    }
-    /**
-     * limit
-     *
-     * @param int $limit
-     * @return self
-     */
-    public function limit($limit)
-    {
-        $this->limit = (int) $limit;
-        return $this;
-    }
-    /**
-     * limit offset
-     *
-     * @param int $offset
-     * @return self
-     */
-    public function offset($offset)
-    {
-        $this->offset = (int) $offset;
-        return $this;
-    }
-    /**
-     * orderby.
-     *
-     * @param array $cols
-     * @return self
-     */
-    public function orderBy(array $cols)
-    {
-        return $this->addOrderBy($cols);
-    }
-    /**
-     * order by ASC OR DESC
-     *
-     * @param array $cols
-     * @param bool  $order_asc
-     * @return self
-     */
-    public function orderByASC(array $cols, $order_asc = true)
-    {
-        $this->order_asc = $order_asc;
-        return $this->addOrderBy($cols);
-    }
-    // -------------abstractquery----------
-    /**
-     * 返回逗号分隔的字符串
-     *
-     * @param array $list
-     * @return string
-     */
-    protected function indentCsv(array $list)
-    {
-        return ' ' . implode(',', $list);
-    }
-    /**
-     * 返回空格分隔的字符串
-     *
-     * @param array $list
-     * @return string
-     */
-    protected function indent(array $list)
-    {
-        return ' ' . implode(' ', $list);
-    }
-    /**
-     * 批量为占位符绑定值
-     *
-     * @param array $bind_values
-     * @return self
-     *
-     */
-    public function bindValues(array $bind_values)
-    {
-        foreach ($bind_values as $key => $val) {
-            $this->bindValue($key, $val);
-        }
-        return $this;
-    }
-    /**
-     * 单个为占位符绑定值
-     *
-     * @param string $name
-     * @param mixed  $value
-     * @return self
-     */
-    public function bindValue($name, $value)
-    {
-        $this->bind_values[$name] = $value;
-        return $this;
-    }
-    /**
-     * 生成 flag
-     *
-     * @return string
-     */
-    protected function buildFlags()
-    {
-        if (!$this->flags) {
-            return '';
-        }
-        return ' ' . implode(' ', array_keys($this->flags));
-    }
-    /**
-     * 设置 flag.
-     *
-     * @param string $flag
-     * @param bool   $enable
-     */
-    protected function setFlag($flag, $enable = true)
-    {
-        if ($enable) {
-            $this->flags[$flag] = true;
-        } else {
-            unset($this->flags[$flag]);
-        }
-    }
-    /**
-     * 重置 flag
-     */
-    protected function resetFlags()
-    {
-        $this->flags = array();
-    }
-    /**
-     *
-     * 添加 where 语句
-     *
-     * @param string $andor 'AND' or 'OR
-     * @param array  $conditions
-     * @return self
-     *
-     */
-    protected function addWhere($andor, $conditions)
-    {
-        $this->addClauseCondWithBind('where', $andor, $conditions);
-        return $this;
-    }
-    /**
-     * 添加条件和绑定值
-     *
-     * @param string $clause where 、having等
-     * @param string $andor  AND、OR等
-     * @param array  $conditions
-     */
-    protected function addClauseCondWithBind($clause, $andor, $conditions)
-    {
-        $cond = array_shift($conditions);
-        $cond = $this->quoteNamesIn($cond);
-        $bind = &$this->{"bind_{$clause}"};
-        foreach ($conditions as $value) {
-            $bind[] = $value;
-        }
-        $clause = &$this->$clause;
-        if ($clause) {
-            $clause[] = "$andor $cond";
-        } else {
-            $clause[] = $cond;
-        }
-    }
-    /**
-     * 生成 where 语句
-     *
-     * @return string
-     */
-    protected function buildWhere()
-    {
-        if (!$this->where) {
-            return '';
-        }
-        return ' WHERE' . $this->indent($this->where);
-    }
-    /**
-     * 增加 order by
-     *
-     * @param array $spec The columns and direction to order by.
-     * @return self
-     */
-    protected function addOrderBy(array $spec)
-    {
-        foreach ($spec as $col) {
-            $this->order_by[] = $this->quoteNamesIn($col);
-        }
-        return $this;
-    }
-    /**
-     * 生成 order by 语句
-     *
-     * @return string
-     */
-    protected function buildOrderBy()
-    {
-        if (!$this->order_by) {
-            return '';
-        }
-        if ($this->order_asc) {
-            return ' ORDER BY' . $this->indentCsv($this->order_by) . ' ASC';
-        } else {
-            return ' ORDER BY' . $this->indentCsv($this->order_by) . ' DESC';
-        }
-    }
-    /**
-     * 生成 limit 语句
-     *
-     * @return string
-     */
-    protected function buildLimit()
-    {
-        $has_limit = $this->type == 'DELETE' || $this->type == 'UPDATE';
-        $has_offset = $this->type == 'SELECT';
-        if ($has_offset && $this->limit) {
-            $clause = " LIMIT {$this->limit}";
-            if ($this->offset) {
-                $clause .= " OFFSET {$this->offset}";
+            else
+            {
+                if (
+                    isset($options['port']) &&
+                    is_int($options['port'] * 1)
+                )
+                {
+                    $port = $options['port'];
+                }
+                $is_port = isset($port);
+                switch ($this->database_type)
+                {
+                    case 'mariadb':
+                    case 'mysql':
+                        $attr = [
+                            'driver' => 'mysql',
+                            'dbname' => $options['database_name']
+                        ];
+                        if (isset($options['socket']))
+                        {
+                            $attr['unix_socket'] = $options['socket'];
+                        }
+                        else
+                        {
+                            $attr['host'] = $options['server'];
+                            if ($is_port)
+                            {
+                                $attr['port'] = $port;
+                            }
+                        }
+                        // Make MySQL using standard quoted identifier
+                        $commands[] = 'SET SQL_MODE=ANSI_QUOTES';
+                        break;
+                    case 'pgsql':
+                        $attr = [
+                            'driver' => 'pgsql',
+                            'host' => $options['server'],
+                            'dbname' => $options['database_name']
+                        ];
+                        if ($is_port)
+                        {
+                            $attr['port'] = $port;
+                        }
+                        break;
+                    case 'sybase':
+                        $attr = [
+                            'driver' => 'dblib',
+                            'host' => $options['server'],
+                            'dbname' => $options['database_name']
+                        ];
+                        if ($is_port)
+                        {
+                            $attr['port'] = $port;
+                        }
+                        break;
+                    case 'oracle':
+                        $attr = [
+                            'driver' => 'oci',
+                            'dbname' => $options['server'] ?
+                                '//' . $options['server'] . ($is_port ? ':' . $port : ':1521') . '/' . $options['database_name'] :
+                                $options['database_name']
+                        ];
+                        if (isset($options['charset']))
+                        {
+                            $attr['charset'] = $options['charset'];
+                        }
+                        break;
+                    case 'mssql':
+                        if (strstr(PHP_OS, 'WIN'))
+                        {
+                            $attr = [
+                                'driver' => 'sqlsrv',
+                                'server' => $options['server'],
+                                'database' => $options['database_name']
+                            ];
+                        }
+                        else
+                        {
+                            $attr = [
+                                'driver' => 'dblib',
+                                'host' => $options['server'],
+                                'dbname' => $options['database_name']
+                            ];
+                        }
+                        if ($is_port)
+                        {
+                            $attr['port'] = $port;
+                        }
+                        // Keep MSSQL QUOTED_IDENTIFIER is ON for standard quoting
+                        $commands[] = 'SET QUOTED_IDENTIFIER ON';
+                        // Make ANSI_NULLS is ON for NULL value
+                        $commands[] = 'SET ANSI_NULLS ON';
+                        break;
+                    case 'sqlite':
+                        $this->pdo = new PDO('sqlite:' . $options['database_file'], null, null, $this->option);
+                        return $this;
+                }
             }
-            return $clause;
-        } elseif ($has_limit && $this->limit) {
-            return " LIMIT {$this->limit}";
-        }
-        return '';
-    }
-    /**
-     * Quotes
-     *
-     * @param string $spec
-     * @return string|array
-     */
-    public function quoteName($spec)
-    {
-        $spec = trim($spec);
-        $seps = array(' AS ', ' ', '.');
-        foreach ($seps as $sep) {
-            $pos = strripos($spec, $sep);
-            if ($pos) {
-                return $this->quoteNameWithSeparator($spec, $sep, $pos);
+            $driver = $attr['driver'];
+            unset($attr['driver']);
+            $stack = [];
+            foreach ($attr as $key => $value)
+            {
+                if (is_int($key))
+                {
+                    $stack[] = $value;
+                }
+                else
+                {
+                    $stack[] = $key . '=' . $value;
+                }
+            }
+            $dsn = $driver . ':' . implode($stack, ';');
+            if (
+                in_array($this->database_type, ['mariadb', 'mysql', 'pgsql', 'sybase', 'mssql']) &&
+                $options['charset']
+            )
+            {
+                $commands[] = "SET NAMES '" . $options['charset'] . "'";
+            }
+            $this->pdo = new PDO(
+                $dsn,
+                $options['username'],
+                $options['password'],
+                $this->option
+            );
+            foreach ($commands as $value)
+            {
+                $this->pdo->exec($value);
             }
         }
-        return $this->replaceName($spec);
-    }
-    /**
-     * 指定分隔符的 Quotes
-     *
-     * @param string $spec
-     * @param string $sep
-     * @param int    $pos
-     * @return string
-     */
-    protected function quoteNameWithSeparator($spec, $sep, $pos)
-    {
-        $len = strlen($sep);
-        $part1 = $this->quoteName(substr($spec, 0, $pos));
-        $part2 = $this->replaceName(substr($spec, $pos + $len));
-        return "{$part1}{$sep}{$part2}";
-    }
-    /**
-     * Quotes "table.col" 格式的字符串
-     *
-     * @param string $text
-     * @return string|array
-     */
-    public function quoteNamesIn($text)
-    {
-        $list = $this->getListForQuoteNamesIn($text);
-        $last = count($list) - 1;
-        $text = null;
-        foreach ($list as $key => $val) {
-            if (($key + 1) % 3) {
-                $text .= $this->quoteNamesInLoop($val, $key == $last);
-            }
+        catch (PDOException $e) {
+            throw new Exception($e->getMessage());
         }
-        return $text;
     }
-    /**
-     * 返回 quote 元素列表
-     *
-     * @param string $text
-     * @return array
-     */
-    protected function getListForQuoteNamesIn($text)
-    {
-        $apos = "'";
-        $quot = '"';
-        return preg_split(
-            "/(($apos+|$quot+|\\$apos+|\\$quot+).*?\\2)/",
-            $text,
-            -1,
-            PREG_SPLIT_DELIM_CAPTURE
-        );
-    }
-    /**
-     * 循环 quote
-     *
-     * @param string $val
-     * @param bool   $is_last
-     * @return string
-     */
-    protected function quoteNamesInLoop($val, $is_last)
-    {
-        if ($is_last) {
-            return $this->replaceNamesAndAliasIn($val);
-        }
-        return $this->replaceNamesIn($val);
-    }
-    /**
-     * 替换成别名
-     *
-     * @param string $val
-     * @return string
-     */
-    protected function replaceNamesAndAliasIn($val)
-    {
-        $quoted = $this->replaceNamesIn($val);
-        $pos = strripos($quoted, ' AS ');
-        if ($pos) {
-            $alias = $this->replaceName(substr($quoted, $pos + 4));
-            $quoted = substr($quoted, 0, $pos) . " AS $alias";
-        }
-        return $quoted;
-    }
-    /**
-     * Quotes name
-     *
-     * @param string $name
-     * @return string
-     */
-    protected function replaceName($name)
-    {
-        $name = trim($name);
-        if ($name == '*') {
-            return $name;
-        }
-        return '`' . $name . '`';
-    }
-    /**
-     * Quotes
-     *
-     * @param string $text
-     * @return string|array
-     */
-    protected function replaceNamesIn($text)
-    {
-        $is_string_literal = strpos($text, "'") !== false
-        || strpos($text, '"') !== false;
-        if ($is_string_literal) {
-            return $text;
-        }
-        $word = '[a-z_][a-z0-9_]+';
-        $find = "/(\\b)($word)\\.($word)(\\b)/i";
-        $repl = '$1`$2`.`$3`$4';
-        $text = preg_replace($find, $repl, $text);
-        return $text;
-    }
-    // ---------- insert --------------
-    /**
-     * 设置 `table.column` 与 last-insert-id 的映射
-     *
-     * @param array $last_insert_id_names
-     */
-    public function setLastInsertIdNames(array $last_insert_id_names)
-    {
-        $this->last_insert_id_names = $last_insert_id_names;
-    }
-    /**
-     * insert into.
-     *
-     * @param string $table
-     * @return self
-     */
-    public function into($table)
-    {
-        $this->table = $this->quoteName($table);
-        return $this;
-    }
-    /**
-     * 生成 INSERT 语句
-     *
-     * @return string
-     */
-    protected function buildINSERT()
-    {
-        return 'INSERT'
-        . $this->buildFlags()
-        . $this->buildInto()
-        . $this->buildValuesForInsert()
-        . $this->buildReturning();
-    }
-    /**
-     * 生成 INTO 语句
-     *
-     * @return string
-     */
-    protected function buildInto()
-    {
-        return " INTO " . $this->table;
-    }
-    /**
-     * PDO::lastInsertId()
-     *
-     * @param string $col
-     * @return mixed
-     */
-    public function getLastInsertIdName($col)
-    {
-        $key = str_replace('`', '', $this->table) . '.' . $col;
-        if (isset($this->last_insert_id_names[$key])) {
-            return $this->last_insert_id_names[$key];
-        }
-        return null;
-    }
-    /**
-     * 设置一列，如果有第二各参数，则把第二个参数绑定在占位符上
-     *
-     * @param string $col
-     * @return self
-     */
-    public function col($col)
-    {
-        return call_user_func_array(array($this, 'addCol'), func_get_args());
-    }
-    /**
-     * 设置多列
-     *
-     * @param array $cols
-     * @return self
-     */
-    public function cols(array $cols)
-    {
-        if ($this->type == 'SELECT') {
-            foreach ($cols as $key => $val) {
-                $this->addColSELECT($key, $val);
-            }
-            return $this;
-        }
-        return $this->addCols($cols);
-    }
-    /**
-     * 直接设置列的值
-     *
-     * @param string $col
-     * @param string $value
-     * @return self
-     */
-    public function set($col, $value)
-    {
-        return $this->setCol($col, $value);
-    }
-    /**
-     * 为 INSERT 语句绑定值
-     *
-     * @return string
-     */
-    protected function buildValuesForInsert()
-    {
-        return ' (' . $this->indentCsv(array_keys($this->col_values)) . ') VALUES (' .
-        $this->indentCsv(array_values($this->col_values)) . ')';
-    }
-    // ------update-------
-    /**
-     * 更新哪个表
-     *
-     * @param string $table
-     * @return self
-     */
-    public function table($table)
-    {
-        $this->table = $this->quoteName($table);
-        return $this;
-    }
-    /**
-     * 生成完整 SQL 语句
-     *
-     * @return string
-     * @throws Exception
-     */
-    protected function build()
-    {
-        switch ($this->type) {
-            case 'DELETE':
-                return $this->buildDELETE();
-            case 'INSERT':
-                return $this->buildINSERT();
-            case 'UPDATE':
-                return $this->buildUPDATE();
-            case 'SELECT':
-                return $this->buildSELECT();
-        }
-        throw new Exception("type empty");
-    }
-    /**
-     * 生成更新的 SQL 语句
-     */
-    protected function buildUPDATE()
-    {
-        return 'UPDATE'
-        . $this->buildFlags()
-        . $this->buildTable()
-        . $this->buildValuesForUpdate()
-        . $this->buildWhere()
-        . $this->buildOrderBy()
-        . $this->buildLimit()
-        . $this->buildReturning();
-    }
-    /**
-     * 哪个表
-     *
-     * @return string
-     */
-    protected function buildTable()
-    {
-        return " {$this->table}";
-    }
-    /**
-     * 为更新语句绑定值
-     *
-     * @return string
-     */
-    protected function buildValuesForUpdate()
-    {
-        $values = array();
-        foreach ($this->col_values as $col => $value) {
-            $values[] = "{$col} = {$value}";
-        }
-        return ' SET' . $this->indentCsv($values);
-    }
-    // ----------Dml---------------
-    /**
-     * 获取绑定的值
-     *
-     * @return array
-     */
-    public function getBindValuesCOMMON()
-    {
-        $bind_values = $this->bind_values;
-        $i = 1;
-        foreach ($this->bind_where as $val) {
-            $bind_values[$i] = $val;
-            $i++;
-        }
-        return $bind_values;
-    }
-    /**
-     * 设置列
-     *
-     * @param string $col
-     * @return self
-     */
-    protected function addCol($col)
-    {
-        $key = $this->quoteName($col);
-        $this->col_values[$key] = ":$col";
-        $args = func_get_args();
-        if (count($args) > 1) {
-            $this->bindValue($col, $args[1]);
-        }
-        return $this;
-    }
-    /**
-     * 设置多个列
-     *
-     * @param array $cols
-     * @return self
-     */
-    protected function addCols(array $cols)
-    {
-        foreach ($cols as $key => $val) {
-            if (is_int($key)) {
-                $this->addCol($val);
-            } else {
-                $this->addCol($key, $val);
-            }
-        }
-        return $this;
-    }
-    /**
-     * 设置单列的值
-     *
-     * @param string $col .
-     * @param string $value
-     * @return self
-     */
-    protected function setCol($col, $value)
-    {
-        if ($value === null) {
-            $value = 'NULL';
-        }
-        $key = $this->quoteName($col);
-        $value = $this->quoteNamesIn($value);
-        $this->col_values[$key] = $value;
-        return $this;
-    }
-    /**
-     * 增加返回的列
-     *
-     * @param array $cols
-     * @return self
-     *
-     */
-    protected function addReturning(array $cols)
-    {
-        foreach ($cols as $col) {
-            $this->returning[] = $this->quoteNamesIn($col);
-        }
-        return $this;
-    }
-    /**
-     * 生成 RETURNING 语句
-     *
-     * @return string
-     */
-    protected function buildReturning()
-    {
-        if (!$this->returning) {
-            return '';
-        }
-        return ' RETURNING' . $this->indentCsv($this->returning);
-    }
-    /**
-     * 构造函数
-     *
-     * @param string $host
-     * @param int    $port
-     * @param string $user
-     * @param string $password
-     * @param string $db_name
-     * @param string $charset
-     */
-    public function __construct($host, $port, $user, $password, $db_name, $charset = 'utf8')
-    {
-        $this->settings = array(
-            'host' => $host,
-            'port' => $port,
-            'user' => $user,
-            'password' => $password,
-            'dbname' => $db_name,
-            'charset' => $charset,
-        );
-        $this->connect();
-    }
-    /**
-     * 创建 PDO 实例
-     */
-    protected function connect()
-    {
-        $dsn = 'mysql:dbname=' . $this->settings["dbname"] . ';host=' .
-        $this->settings["host"] . ';port=' . $this->settings['port'];
-        $this->pdo = new PDO($dsn, $this->settings["user"], $this->settings["password"],
-            array(
-                PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES ' . (!empty($this->settings['charset']) ?
-                    $this->settings['charset'] : 'utf8'),
-            ));
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-    }
-    /**
-     * 关闭连接
-     */
     public function closeConnection()
     {
         $this->pdo = null;
     }
-    /**
-     * 执行
-     *
-     * @param string $query
-     * @param string $parameters
-     * @throws PDOException
-     */
-    protected function execute($query, $parameters = "")
+    public function query($query)
     {
-        try {
-            $this->sQuery = @$this->pdo->prepare($query);
-            $this->bindMore($parameters);
-            if (!empty($this->parameters)) {
-                foreach ($this->parameters as $param) {
-                    $parameters = explode("\x7F", $param);
-                    $this->sQuery->bindParam($parameters[0], $parameters[1]);
+        if ($this->debug_mode)
+        {
+            echo $query;
+            $this->debug_mode = false;
+            return false;
+        }
+        $this->logs[] = $query;
+        return $this->pdo->query($query);
+    }
+    public function exec($query)
+    {
+        if ($this->debug_mode)
+        {
+            echo $query;
+            $this->debug_mode = false;
+            return false;
+        }
+        $this->logs[] = $query;
+        return $this->pdo->exec($query);
+    }
+    public function quote($string)
+    {
+        return $this->pdo->quote($string);
+    }
+    protected function tableQuote($table)
+    {
+        return '"' . $this->prefix . $table . '"';
+    }
+    protected function columnQuote($string)
+    {
+        preg_match('/(\(JSON\)\s*|^#)?([a-zA-Z0-9_]*)\.([a-zA-Z0-9_]*)/', $string, $column_match);
+        if (isset($column_match[ 2 ], $column_match[ 3 ]))
+        {
+            return '"' . $this->prefix . $column_match[ 2 ] . '"."' . $column_match[ 3 ] . '"';
+        }
+        return '"' . $string . '"';
+    }
+    protected function columnPush(&$columns)
+    {
+        if ($columns == '*')
+        {
+            return $columns;
+        }
+        if (is_string($columns))
+        {
+            $columns = [$columns];
+        }
+        $stack = [];
+        foreach ($columns as $key => $value)
+        {
+            if (is_array($value))
+            {
+                $stack[] = $this->columnPush($value);
+            }
+            else
+            {
+                preg_match('/([a-zA-Z0-9_\-\.]*)\s*\(([a-zA-Z0-9_\-]*)\)/i', $value, $match);
+                if (isset($match[ 1 ], $match[ 2 ]))
+                {
+                    $stack[] = $this->columnQuote( $match[ 1 ] ) . ' AS ' . $this->columnQuote( $match[ 2 ] );
+                    $columns[ $key ] = $match[ 2 ];
+                }
+                else
+                {
+                    $stack[] = $this->columnQuote( $value );
                 }
             }
-            $this->success = $this->sQuery->execute();
-        } catch (PDOException $e) {
-            // 服务端断开时重连一次
-            if ($e->errorInfo[1] == 2006 || $e->errorInfo[1] == 2013) {
-                $this->closeConnection();
-                $this->connect();
-                try {
-                    $this->sQuery = $this->pdo->prepare($query);
-                    $this->bindMore($parameters);
-                    if (!empty($this->parameters)) {
-                        foreach ($this->parameters as $param) {
-                            $parameters = explode("\x7F", $param);
-                            $this->sQuery->bindParam($parameters[0], $parameters[1]);
+        }
+        return implode($stack, ',');
+    }
+    protected function arrayQuote($array)
+    {
+        $temp = [];
+        foreach ($array as $value)
+        {
+            $temp[] = is_int($value) ? $value : $this->pdo->quote($value);
+        }
+        return implode($temp, ',');
+    }
+    protected function innerConjunct($data, $conjunctor, $outer_conjunctor)
+    {
+        $haystack = [];
+        foreach ($data as $value)
+        {
+            $haystack[] = '(' . $this->dataImplode($value, $conjunctor) . ')';
+        }
+        return implode($outer_conjunctor . ' ', $haystack);
+    }
+    protected function fnQuote($column, $string)
+    {
+        return (strpos($column, '#') === 0 && preg_match('/^[A-Z0-9\_]*\([^)]*\)$/', $string)) ?
+            $string :
+            $this->quote($string);
+    }
+    protected function dataImplode($data, $conjunctor, $outer_conjunctor = null)
+    {
+        $wheres = [];
+        foreach ($data as $key => $value)
+        {
+            $type = gettype($value);
+            if (
+                preg_match("/^(AND|OR)(\s+#.*)?$/i", $key, $relation_match) &&
+                $type == 'array'
+            )
+            {
+                $wheres[] = 0 !== count(array_diff_key($value, array_keys(array_keys($value)))) ?
+                    '(' . $this->dataImplode($value, ' ' . $relation_match[ 1 ]) . ')' :
+                    '(' . $this->innerConjunct($value, ' ' . $relation_match[ 1 ], $conjunctor) . ')';
+            }
+            else
+            {
+                if (
+                    is_int($key) &&
+                    preg_match('/([\w\.\-]+)\[(\>|\>\=|\<|\<\=|\!|\=)\]([\w\.\-]+)/i', $value, $match)
+                )
+                {
+                    $operator = $match[ 2 ];
+                    
+                    $wheres[] = $this->columnQuote($match[ 1 ]) . ' ' . $operator . ' ' . $this->columnQuote($match[ 3 ]);
+                }
+                else
+                {
+                    preg_match('/(#?)([\w\.\-]+)(\[(\>|\>\=|\<|\<\=|\!|\<\>|\>\<|\!?~)\])?/i', $key, $match);
+                    $column = $this->columnQuote($match[ 2 ]);
+                    if (isset($match[ 4 ]))
+                    {
+                        $operator = $match[ 4 ];
+                        if ($operator == '!')
+                        {
+                            switch ($type)
+                            {
+                                case 'NULL':
+                                    $wheres[] = $column . ' IS NOT NULL';
+                                    break;
+                                case 'array':
+                                    $wheres[] = $column . ' NOT IN (' . $this->arrayQuote($value) . ')';
+                                    break;
+                                case 'integer':
+                                case 'double':
+                                    $wheres[] = $column . ' != ' . $value;
+                                    break;
+                                case 'boolean':
+                                    $wheres[] = $column . ' != ' . ($value ? '1' : '0');
+                                    break;
+                                case 'string':
+                                    $wheres[] = $column . ' != ' . $this->fnQuote($key, $value);
+                                    break;
+                            }
+                        }
+                        if ($operator == '<>' || $operator == '><')
+                        {
+                            if ($type == 'array')
+                            {
+                                if ($operator == '><')
+                                {
+                                    $column .= ' NOT';
+                                }
+                                if (is_numeric($value[ 0 ]) && is_numeric($value[ 1 ]))
+                                {
+                                    $wheres[] = '(' . $column . ' BETWEEN ' . $value[ 0 ] . ' AND ' . $value[ 1 ] . ')';
+                                }
+                                else
+                                {
+                                    $wheres[] = '(' . $column . ' BETWEEN ' . $this->quote($value[ 0 ]) . ' AND ' . $this->quote($value[ 1 ]) . ')';
+                                }
+                            }
+                        }
+                        if ($operator == '~' || $operator == '!~')
+                        {
+                            if ($type != 'array')
+                            {
+                                $value = [$value];
+                            }
+                            $connector = ' OR ';
+                            $stack = array_values($value);
+                            if (is_array($stack[0]))
+                            {
+                                if (isset($value['AND']) || isset($value['OR']))
+                                {
+                                    $connector = ' ' . array_keys($value)[0] . ' ';
+                                    $value = $stack[0];
+                                }
+                            }
+                            $like_clauses = [];
+                            foreach ($value as $item)
+                            {
+                                $item = strval($item);
+                                if (!preg_match('/(\[.+\]|_|%.+|.+%)/', $item))
+                                {
+                                    $item = '%' . $item . '%';
+                                }
+                                $like_clauses[] = $column . ($operator === '!~' ? ' NOT' : '') . ' LIKE ' . $this->fnQuote($key, $item);
+                            }
+                            $wheres[] = '(' . implode($connector, $like_clauses) . ')';
+                        }
+                        if (in_array($operator, ['>', '>=', '<', '<=']))
+                        {
+                            $condition = $column . ' ' . $operator . ' ';
+                            if (is_numeric($value))
+                            {
+                                $condition .= $value;
+                            }
+                            elseif (strpos($key, '#') === 0)
+                            {
+                                $condition .= $this->fnQuote($key, $value);
+                            }
+                            else
+                            {
+                                $condition .= $this->quote($value);
+                            }
+                            $wheres[] = $condition;
                         }
                     }
-                    $this->success = $this->sQuery->execute();
-                } catch (PDOException $ex) {
-                    $this->rollBackTrans();
-                    throw $ex;
+                    else
+                    {
+                        switch ($type)
+                        {
+                            case 'NULL':
+                                $wheres[] = $column . ' IS NULL';
+                                break;
+                            case 'array':
+                                $wheres[] = $column . ' IN (' . $this->arrayQuote($value) . ')';
+                                break;
+                            case 'integer':
+                            case 'double':
+                                $wheres[] = $column . ' = ' . $value;
+                                break;
+                            case 'boolean':
+                                $wheres[] = $column . ' = ' . ($value ? '1' : '0');
+                                break;
+                            case 'string':
+                                $wheres[] = $column . ' = ' . $this->fnQuote($key, $value);
+                                break;
+                        }
+                    }
                 }
-            } else {
-                $this->rollBackTrans();
-                throw $e;
             }
         }
-        $this->parameters = array();
+        return implode($conjunctor . ' ', $wheres);
     }
-    /**
-     * 绑定
-     *
-     * @param string $para
-     * @param string $value
-     */
-    public function bind($para, $value)
+    protected function whereClause($where)
     {
-        if (is_string($para)) {
-            $this->parameters[sizeof($this->parameters)] = ":" . $para . "\x7F" . $value;
-        } else {
-            $this->parameters[sizeof($this->parameters)] = $para . "\x7F" . $value;
+        $where_clause = '';
+        if (is_array($where))
+        {
+            $where_keys = array_keys($where);
+            $where_AND = preg_grep("/^AND\s*#?$/i", $where_keys);
+            $where_OR = preg_grep("/^OR\s*#?$/i", $where_keys);
+            $single_condition = array_diff_key($where, array_flip(
+                ['AND', 'OR', 'GROUP', 'ORDER', 'HAVING', 'LIMIT', 'LIKE', 'MATCH']
+            ));
+            if ($single_condition != [])
+            {
+                $condition = $this->dataImplode($single_condition, ' AND');
+                if ($condition != '')
+                {
+                    $where_clause = ' WHERE ' . $condition;
+                }
+            }
+            if (!empty($where_AND))
+            {
+                $value = array_values($where_AND);
+                $where_clause = ' WHERE ' . $this->dataImplode($where[ $value[ 0 ] ], ' AND');
+            }
+            if (!empty($where_OR))
+            {
+                $value = array_values($where_OR);
+                $where_clause = ' WHERE ' . $this->dataImplode($where[ $value[ 0 ] ], ' OR');
+            }
+            if (isset($where[ 'MATCH' ]))
+            {
+                $MATCH = $where[ 'MATCH' ];
+                if (is_array($MATCH) && isset($MATCH[ 'columns' ], $MATCH[ 'keyword' ]))
+                {
+                    $columns = str_replace('.', '"."', implode($MATCH[ 'columns' ], '", "'));
+                    $keywords = $this->quote($MATCH[ 'keyword' ]);
+                    $where_clause .= ($where_clause != '' ? ' AND ' : ' WHERE ') . ' MATCH ("' . $columns . '") AGAINST (' . $keywords . ')';
+                }
+            }
+            if (isset($where[ 'GROUP' ]))
+            {
+                $where_clause .= ' GROUP BY ' . $this->columnQuote($where[ 'GROUP' ]);
+                if (isset($where[ 'HAVING' ]))
+                {
+                    $where_clause .= ' HAVING ' . $this->dataImplode($where[ 'HAVING' ], ' AND');
+                }
+            }
+            if (isset($where[ 'ORDER' ]))
+            {
+                $ORDER = $where[ 'ORDER' ];
+                if (is_array($ORDER))
+                {
+                    $stack = [];
+                    foreach ($ORDER as $column => $value)
+                    {
+                        if (is_array($value))
+                        {
+                            $stack[] = 'FIELD(' . $this->columnQuote($column) . ', ' . $this->arrayQuote($value) . ')';
+                        }
+                        else if ($value === 'ASC' || $value === 'DESC')
+                        {
+                            $stack[] = $this->columnQuote($column) . ' ' . $value;
+                        }
+                        else if (is_int($column))
+                        {
+                            $stack[] = $this->columnQuote($value);
+                        }
+                    }
+                    $where_clause .= ' ORDER BY ' . implode($stack, ',');
+                }
+                else
+                {
+                    $where_clause .= ' ORDER BY ' . $this->columnQuote($ORDER);
+                }
+            }
+            if (isset($where[ 'LIMIT' ]))
+            {
+                $LIMIT = $where[ 'LIMIT' ];
+                if (is_numeric($LIMIT))
+                {
+                    $where_clause .= ' LIMIT ' . $LIMIT;
+                }
+                if (
+                    is_array($LIMIT) &&
+                    is_numeric($LIMIT[ 0 ]) &&
+                    is_numeric($LIMIT[ 1 ])
+                )
+                {
+                    if ($this->database_type === 'pgsql')
+                    {
+                        $where_clause .= ' OFFSET ' . $LIMIT[ 0 ] . ' LIMIT ' . $LIMIT[ 1 ];
+                    }
+                    else
+                    {
+                        $where_clause .= ' LIMIT ' . $LIMIT[ 0 ] . ',' . $LIMIT[ 1 ];
+                    }
+                }
+            }
+        }
+        else
+        {
+            if ($where != null)
+            {
+                $where_clause .= ' ' . $where;
+            }
+        }
+        return $where_clause;
+    }
+    protected function selectContext($table, $join, &$columns = null, $where = null, $column_fn = null)
+    {
+        preg_match('/([a-zA-Z0-9_\-]*)\s*\(([a-zA-Z0-9_\-]*)\)/i', $table, $table_match);
+        if (isset($table_match[ 1 ], $table_match[ 2 ]))
+        {
+            $table = $this->tableQuote($table_match[ 1 ]);
+            $table_query = $table . ' AS ' . $this->tableQuote($table_match[ 2 ]);
+        }
+        else
+        {
+            $table = $this->tableQuote($table);
+            $table_query = $table;
+        }
+        $join_key = is_array($join) ? array_keys($join) : null;
+        if (
+            isset($join_key[ 0 ]) &&
+            strpos($join_key[ 0 ], '[') === 0
+        )
+        {
+            $table_join = [];
+            $join_array = [
+                '>' => 'LEFT',
+                '<' => 'RIGHT',
+                '<>' => 'FULL',
+                '><' => 'INNER'
+            ];
+            foreach($join as $sub_table => $relation)
+            {
+                preg_match('/(\[(\<|\>|\>\<|\<\>)\])?([a-zA-Z0-9_\-]*)\s?(\(([a-zA-Z0-9_\-]*)\))?/', $sub_table, $match);
+                if ($match[ 2 ] != '' && $match[ 3 ] != '')
+                {
+                    if (is_string($relation))
+                    {
+                        $relation = 'USING ("' . $relation . '")';
+                    }
+                    if (is_array($relation))
+                    {
+                        // For ['column1', 'column2']
+                        if (isset($relation[ 0 ]))
+                        {
+                            $relation = 'USING ("' . implode($relation, '", "') . '")';
+                        }
+                        else
+                        {
+                            $joins = [];
+                            foreach ($relation as $key => $value)
+                            {
+                                $joins[] = (
+                                    strpos($key, '.') > 0 ?
+                                        // For ['tableB.column' => 'column']
+                                        $this->columnQuote($key) :
+                                        // For ['column1' => 'column2']
+                                        $table . '."' . $key . '"'
+                                ) .
+                                ' = ' .
+                                $this->tableQuote(isset($match[ 5 ]) ? $match[ 5 ] : $match[ 3 ]) . '."' . $value . '"';
+                            }
+                            $relation = 'ON ' . implode($joins, ' AND ');
+                        }
+                    }
+                    $table_name = $this->tableQuote($match[ 3 ]) . ' ';
+                    if (isset($match[ 5 ]))
+                    {
+                        $table_name .= 'AS ' . $this->tableQuote($match[ 5 ]) . ' ';
+                    }
+                    $table_join[] = $join_array[ $match[ 2 ] ] . ' JOIN ' . $table_name . $relation;
+                }
+            }
+            $table_query .= ' ' . implode($table_join, ' ');
+        }
+        else
+        {
+            if (is_null($columns))
+            {
+                if (is_null($where))
+                {
+                    if (
+                        is_array($join) &&
+                        isset($column_fn)
+                    )
+                    {
+                        $where = $join;
+                        $columns = null;
+                    }
+                    else
+                    {
+                        $where = null;
+                        $columns = $join;
+                    }
+                }
+                else
+                {
+                    $where = $join;
+                    $columns = null;
+                }
+            }
+            else
+            {
+                $where = $columns;
+                $columns = $join;
+            }
+        }
+        if (isset($column_fn))
+        {
+            if ($column_fn == 1)
+            {
+                $column = '1';
+                if (is_null($where))
+                {
+                    $where = $columns;
+                }
+            }
+            else
+            {
+                if (empty($columns))
+                {
+                    $columns = '*';
+                    $where = $join;
+                }
+                $column = $column_fn . '(' . $this->columnPush($columns) . ')';
+            }
+        }
+        else
+        {
+            $column = $this->columnPush($columns);
+        }
+        return 'SELECT ' . $column . ' FROM ' . $table_query . $this->whereClause($where);
+    }
+    protected function dataMap($index, $key, $value, $data, &$stack)
+    {
+        if (is_array($value))
+        {
+            $sub_stack = [];
+            foreach ($value as $sub_key => $sub_value)
+            {
+                if (is_array($sub_value))
+                {
+                    $current_stack = $stack[ $index ][ $key ];
+                    $this->dataMap(false, $sub_key, $sub_value, $data, $current_stack);
+                    $stack[ $index ][ $key ][ $sub_key ] = $current_stack[ 0 ][ $sub_key ];
+                }
+                else
+                {
+                    $this->dataMap(false, preg_replace('/^[\w]*\./i', "", $sub_value), $sub_key, $data, $sub_stack);
+                    $stack[ $index ][ $key ] = $sub_stack;
+                }
+            }
+        }
+        else
+        {
+            if ($index !== false)
+            {
+                $stack[ $index ][ $value ] = $data[ $value ];
+            }
+            else
+            {
+                if (preg_match('/[a-zA-Z0-9_\-\.]*\s*\(([a-zA-Z0-9_\-]*)\)/i', $key, $key_match))
+                {
+                    $key = $key_match[ 1 ];
+                }
+                $stack[ $key ] = $data[ $key ];
+            }
         }
     }
-    /**
-     * 绑定多个
-     *
-     * @param array $parray
-     */
-    public function bindMore($parray)
+    public function select($table, $join, $columns = null, $where = null)
     {
-        if (empty($this->parameters) && is_array($parray)) {
-            $columns = array_keys($parray);
-            foreach ($columns as $i => &$column) {
-                $this->bind($column, $parray[$column]);
+        $column = $where == null ? $join : $columns;
+        $is_single_column = (is_string($column) && $column !== '*');
+        
+        $query = $this->query($this->selectContext($table, $join, $columns, $where));
+        $stack = [];
+        $index = 0;
+        if (!$query)
+        {
+            return false;
+        }
+        if ($columns === '*')
+        {
+            return $query->fetchAll(PDO::FETCH_ASSOC);
+        }
+        if ($is_single_column)
+        {
+            return $query->fetchAll(PDO::FETCH_COLUMN);
+        }
+        while ($row = $query->fetch(PDO::FETCH_ASSOC))
+        {
+            foreach ($columns as $key => $value)
+            {
+                if (!is_array($value))
+                {
+                    $value = preg_replace('/^[\w]*\./i', "", $value);
+                }
+                $this->dataMap($index, $key, $value, $row, $stack);
             }
+            $index++;
+        }
+        return $stack;
+    }
+    public function insert($table, $datas)
+    {
+        $stack = [];
+        $columns = [];
+        $fields = [];
+        // Check indexed or associative array
+        if (!isset($datas[ 0 ]))
+        {
+            $datas = [$datas];
+        }
+        foreach ($datas as $data)
+        {
+            foreach ($data as $key => $value)
+            {
+                $columns[] = $key;
+            }
+        }
+        $columns = array_unique($columns);
+        foreach ($datas as $data)
+        {
+            $values = [];
+            foreach ($columns as $key)
+            {
+                if (!isset($data[$key]))
+                {
+                    $values[] = 'NULL';
+                }
+                else
+                {
+                    $value = $data[$key];
+                    switch (gettype($value))
+                    {
+                        case 'NULL':
+                            $values[] = 'NULL';
+                            break;
+                        case 'array':
+                            preg_match("/\(JSON\)\s*([\w]+)/i", $key, $column_match);
+                            $values[] = isset($column_match[ 0 ]) ?
+                                $this->quote(json_encode($value)) :
+                                $this->quote(serialize($value));
+                            break;
+                        case 'boolean':
+                            $values[] = ($value ? '1' : '0');
+                            break;
+                        case 'integer':
+                        case 'double':
+                        case 'string':
+                            $values[] = $this->fnQuote($key, $value);
+                            break;
+                    }
+                }
+            }
+            $stack[] = '(' . implode($values, ', ') . ')';
+        }
+        foreach ($columns as $key)
+        {
+            $fields[] = $this->columnQuote(preg_replace("/^(\(JSON\)\s*|#)/i", "", $key));
+        }
+        return $this->exec('INSERT INTO ' . $this->tableQuote($table) . ' (' . implode(', ', $fields) . ') VALUES ' . implode(', ', $stack));
+    }
+    public function update($table, $data, $where = null)
+    {
+        $fields = [];
+        foreach ($data as $key => $value)
+        {
+            preg_match('/([\w]+)(\[(\+|\-|\*|\/)\])?/i', $key, $match);
+            if (isset($match[ 3 ]))
+            {
+                if (is_numeric($value))
+                {
+                    $fields[] = $this->columnQuote($match[ 1 ]) . ' = ' . $this->columnQuote($match[ 1 ]) . ' ' . $match[ 3 ] . ' ' . $value;
+                }
+            }
+            else
+            {
+                $column = $this->columnQuote(preg_replace("/^(\(JSON\)\s*|#)/i", "", $key));
+                switch (gettype($value))
+                {
+                    case 'NULL':
+                        $fields[] = $column . ' = NULL';
+                        break;
+                    case 'array':
+                        preg_match("/\(JSON\)\s*([\w]+)/i", $key, $column_match);
+                        $fields[] = $column . ' = ' . $this->quote(
+                                isset($column_match[ 0 ]) ? json_encode($value) : serialize($value)
+                            );
+                        break;
+                    case 'boolean':
+                        $fields[] = $column . ' = ' . ($value ? '1' : '0');
+                        break;
+                    case 'integer':
+                    case 'double':
+                    case 'string':
+                        $fields[] = $column . ' = ' . $this->fnQuote($key, $value);
+                        break;
+                }
+            }
+        }
+        return $this->exec('UPDATE ' . $this->tableQuote($table) . ' SET ' . implode(', ', $fields) . $this->whereClause($where));
+    }
+    public function delete($table, $where)
+    {
+        return $this->exec('DELETE FROM ' . $this->tableQuote($table) . $this->whereClause($where));
+    }
+    public function replace($table, $columns, $search = null, $replace = null, $where = null)
+    {
+        if (is_array($columns))
+        {
+            $replace_query = [];
+            foreach ($columns as $column => $replacements)
+            {
+                foreach ($replacements as $replace_search => $replace_replacement)
+                {
+                    $replace_query[] = $column . ' = REPLACE(' . $this->columnQuote($column) . ', ' . $this->quote($replace_search) . ', ' . $this->quote($replace_replacement) . ')';
+                }
+            }
+            $replace_query = implode(', ', $replace_query);
+            $where = $search;
+        }
+        else
+        {
+            if (is_array($search))
+            {
+                $replace_query = [];
+                foreach ($search as $replace_search => $replace_replacement)
+                {
+                    $replace_query[] = $columns . ' = REPLACE(' . $this->columnQuote($columns) . ', ' . $this->quote($replace_search) . ', ' . $this->quote($replace_replacement) . ')';
+                }
+                $replace_query = implode(', ', $replace_query);
+                $where = $replace;
+            }
+            else
+            {
+                $replace_query = $columns . ' = REPLACE(' . $this->columnQuote($columns) . ', ' . $this->quote($search) . ', ' . $this->quote($replace) . ')';
+            }
+        }
+        return $this->exec('UPDATE ' . $this->tableQuote($table) . ' SET ' . $replace_query . $this->whereClause($where));
+    }
+    public function get($table, $join = null, $columns = null, $where = null)
+    {
+        $column = $where == null ? $join : $columns;
+        $is_single_column = (is_string($column) && $column !== '*');
+        $query = $this->query($this->selectContext($table, $join, $columns, $where) . ' LIMIT 1');
+        if ($query)
+        {
+            $data = $query->fetchAll(PDO::FETCH_ASSOC);
+            if (isset($data[ 0 ]))
+            {
+                if ($is_single_column)
+                {
+                    return $data[ 0 ][ preg_replace('/^[\w]*\./i', "", $column) ];
+                }
+                
+                if ($column === '*')
+                {
+                    return $data[ 0 ];
+                }
+                $stack = [];
+                foreach ($columns as $key => $value)
+                {
+                    if (!is_array($value))
+                    {
+                        $value = preg_replace('/^[\w]*\./i', "", $value);
+                    }
+                    $this->dataMap(0, $key, $value, $data[ 0 ], $stack);
+                }
+                return $stack[ 0 ];
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
         }
     }
-    /**
-     * 执行 SQL
-     *
-     * @param string $query
-     * @param array  $params
-     * @param int    $fetchmode
-     * @return mixed
-     */
-    public function query($query = '', $params = null, $fetchmode = PDO::FETCH_ASSOC)
+    public function has($table, $join, $where = null)
     {
-        $query = trim($query);
-        if (empty($query)) {
-            $query = $this->build();
-            if (!$params) {
-                $params = $this->getBindValues();
-            }
-        }
-        $this->resetAll();
-        $this->lastSql = $query;
-        $this->execute($query, $params);
-        $rawStatement = explode(" ", $query);
-        $statement = strtolower(trim($rawStatement[0]));
-        if ($statement === 'select' || $statement === 'show') {
-            return $this->sQuery->fetchAll($fetchmode);
-        } elseif ($statement === 'update' || $statement === 'delete') {
-            return $this->sQuery->rowCount();
-        } elseif ($statement === 'insert') {
-            if ($this->sQuery->rowCount() > 0) {
-                return $this->lastInsertId();
-            }
-        } else {
-            return null;
-        }
-        return null;
-    }
-    /**
-     * 返回一列
-     *
-     * @param  string $query
-     * @param  array  $params
-     * @return array
-     */
-    public function column($query = '', $params = null)
-    {
-        $query = trim($query);
-        if (empty($query)) {
-            $query = $this->build();
-            if (!$params) {
-                $params = $this->getBindValues();
-            }
-        }
-        $this->resetAll();
-        $this->lastSql = $query;
-        $this->execute($query, $params);
-        $columns = $this->sQuery->fetchAll(PDO::FETCH_NUM);
         $column = null;
-        foreach ($columns as $cells) {
-            $column[] = $cells[0];
+        $query = $this->query('SELECT EXISTS(' . $this->selectContext($table, $join, $column, $where, 1) . ')');
+        if ($query)
+        {
+            return $query->fetchColumn() === '1';
         }
-        return $column;
+        else
+        {
+            return false;
+        }
     }
-    /**
-     * 返回一行
-     *
-     * @param  string $query
-     * @param  array  $params
-     * @param  int    $fetchmode
-     * @return array
-     */
-    public function row($query = '', $params = null, $fetchmode = PDO::FETCH_ASSOC)
+    public function count($table, $join = null, $column = null, $where = null)
     {
-        $query = trim($query);
-        if (empty($query)) {
-            $query = $this->build();
-            if (!$params) {
-                $params = $this->getBindValues();
+        $query = $this->query($this->selectContext($table, $join, $column, $where, 'COUNT'));
+        return $query ? 0 + $query->fetchColumn() : false;
+    }
+    public function max($table, $join, $column = null, $where = null)
+    {
+        $query = $this->query($this->selectContext($table, $join, $column, $where, 'MAX'));
+        if ($query)
+        {
+            $max = $query->fetchColumn();
+            return is_numeric($max) ? $max + 0 : $max;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    public function min($table, $join, $column = null, $where = null)
+    {
+        $query = $this->query($this->selectContext($table, $join, $column, $where, 'MIN'));
+        if ($query)
+        {
+            $min = $query->fetchColumn();
+            return is_numeric($min) ? $min + 0 : $min;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    public function avg($table, $join, $column = null, $where = null)
+    {
+        $query = $this->query($this->selectContext($table, $join, $column, $where, 'AVG'));
+        return $query ? 0 + $query->fetchColumn() : false;
+    }
+    public function sum($table, $join, $column = null, $where = null)
+    {
+        $query = $this->query($this->selectContext($table, $join, $column, $where, 'SUM'));
+        return $query ? 0 + $query->fetchColumn() : false;
+    }
+    public function action($actions)
+    {
+        if (is_callable($actions))
+        {
+            $this->pdo->beginTransaction();
+            $result = $actions($this);
+            if ($result === false)
+            {
+                $this->pdo->rollBack();
+            }
+            else
+            {
+                $this->pdo->commit();
             }
         }
-        $this->resetAll();
-        $this->lastSql = $query;
-        $this->execute($query, $params);
-        return $this->sQuery->fetch($fetchmode);
-    }
-    /**
-     * 返回单个值
-     *
-     * @param  string $query
-     * @param  array  $params
-     * @return string
-     */
-    public function single($query = '', $params = null)
-    {
-        $query = trim($query);
-        if (empty($query)) {
-            $query = $this->build();
-            if (!$params) {
-                $params = $this->getBindValues();
-            }
+        else
+        {
+            return false;
         }
-        $this->resetAll();
-        $this->lastSql = $query;
-        $this->execute($query, $params);
-        return $this->sQuery->fetchColumn();
     }
-    /**
-     * 返回 lastInsertId
-     *
-     * @return string
-     */
-    public function lastInsertId()
+    public function id()
     {
+        if ($this->database_type == 'oracle')
+        {
+            return 0;
+        }
+        elseif ($this->database_type == 'mssql')
+        {
+            return $this->pdo->query('SELECT SCOPE_IDENTITY()')->fetchColumn();
+        }
         return $this->pdo->lastInsertId();
     }
-    /**
-     * 返回最后一条直行的 sql
-     *
-     * @return  string
-     */
-    public function lastSQL()
+    public function debug()
     {
-        return $this->lastSql;
+        $this->debug_mode = true;
+        return $this;
     }
-    /**
-     * 开始事务
-     */
-    public function beginTrans()
+    public function error()
     {
-        $this->pdo->beginTransaction();
+        return $this->pdo->errorInfo();
     }
-    /**
-     * 提交事务
-     */
-    public function commitTrans()
+    public function last()
     {
-        $this->pdo->commit();
+        return end($this->logs);
     }
-    /**
-     * 事务回滚
-     */
-    public function rollBackTrans()
+    public function log()
     {
-        if ($this->pdo->inTransaction()) {
-            $this->pdo->rollBack();
+        return $this->logs;
+    }
+    public function info()
+    {
+        $output = [
+            'server' => 'SERVER_INFO',
+            'driver' => 'DRIVER_NAME',
+            'client' => 'CLIENT_VERSION',
+            'version' => 'SERVER_VERSION',
+            'connection' => 'CONNECTION_STATUS'
+        ];
+        foreach ($output as $key => $value)
+        {
+            $output[ $key ] = @$this->pdo->getAttribute(constant('PDO::ATTR_' . $value));
         }
+        return $output;
     }
 }

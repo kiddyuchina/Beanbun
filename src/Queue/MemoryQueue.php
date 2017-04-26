@@ -10,6 +10,7 @@ class MemoryQueue implements QueueInterface
     public $globalData = null;
     public $maxQueueSize = 10000;
     public $maxQueuedCount = 0;
+    public $bloomFilter = true;
 
     protected static $server = [];
 
@@ -54,7 +55,12 @@ class MemoryQueue implements QueueInterface
         }
 
         $this->globalData->add($this->key, []);
-        $this->globalData->add($this->queuedKey, []);
+        if ($this->bloomFilter) {
+            $this->globalData->bfNew($this->queuedKey, [400000, 14]);
+        } else {
+            $this->globalData->add($this->queuedKey, []);
+        }
+        
         $this->globalData->add('beanbun', []);
 
         if (!isset($this->globalData->beanbun[$this->name])) {
@@ -108,17 +114,29 @@ class MemoryQueue implements QueueInterface
 
     public function queued($queue)
     {
-        $this->globalData->push($this->queuedKey, serialize($queue));
+        if ($this->bloomFilter) {
+            $this->globalData->bfAdd($this->queuedKey, md5(serialize($queue)));
+        } else {
+            $this->globalData->push($this->queuedKey, serialize($queue));
+        }
     }
 
     public function isQueued($queue)
     {
-        return in_array(serialize($queue), $this->globalData->{$this->queuedKey});
+        if ($this->bloomFilter) {
+            return $this->globalData->bfIn($this->queuedKey, md5(serialize($queue)));
+        } else {
+            return in_array(serialize($queue), $this->globalData->{$this->queuedKey});
+        }
     }
 
     public function queuedCount()
     {
-        return $this->globalData->count($this->queuedKey);
+        if ($this->bloomFilter) {
+            return 0;
+        } else {
+            return $this->globalData->count($this->queuedKey);
+        }
     }
 
     public function clean()

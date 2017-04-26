@@ -74,6 +74,7 @@ class Client
                         \Workerman\Lib\Timer::del($timer_id);
                     }
                 }, array($connection));
+                echo '('.$timer_id.')';
             }
             $this->_globalConnections[$offset] = $connection;
         }
@@ -305,6 +306,54 @@ class Client
         $connection = $this->getConnection($key);
         $this->writeToRemote(array(
             'cmd' => 'in',
+            'key' => $key,
+            'value' => $value,
+        ), $connection);
+        return $this->readFromRemote($connection);
+    }
+
+    /**
+     * bfNew.
+     * @param string $key
+     * @throws \Exception
+     */
+    public function bfNew($key, $value = [])
+    {
+        $connection = $this->getConnection($key);
+        $this->writeToRemote(array(
+            'cmd' => 'bfNew',
+            'key' => $key,
+            'value' => $value,
+        ), $connection);
+        return $this->readFromRemote($connection);
+    }
+
+    /**
+     * bfAdd.
+     * @param string $key
+     * @throws \Exception
+     */
+    public function bfAdd($key, $value)
+    {
+        $connection = $this->getConnection($key);
+        $this->writeToRemote(array(
+            'cmd' => 'bfAdd',
+            'key' => $key,
+            'value' => $value,
+        ), $connection);
+        return $this->readFromRemote($connection);
+    }
+
+    /**
+     * bfIn.
+     * @param string $key
+     * @throws \Exception
+     */
+    public function bfIn($key, $value)
+    {
+        $connection = $this->getConnection($key);
+        $this->writeToRemote(array(
+            'cmd' => 'bfIn',
             'key' => $key,
             'value' => $value,
         ), $connection);

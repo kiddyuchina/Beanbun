@@ -36,8 +36,7 @@ class Db
     {
         if (empty(self::$instance[$config_name])) {
             $config = self::$config[$config_name];
-            self::$instance[$config_name] = new \Beanbun\Lib\DbConnection($config['host'], $config['port'],
-                $config['user'], $config['password'], $config['dbname']);
+            self::$instance[$config_name] = new \Beanbun\Lib\DbConnection($config);
         }
         return self::$instance[$config_name];
     }

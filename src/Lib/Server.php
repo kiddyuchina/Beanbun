@@ -135,14 +135,27 @@ class Server
                 unset($this->_dataArray[$key]);
                 $connection->send('b:1;');
                 break;
-            case 'bf':
+            case 'bfNew':
                 if (isset($this->_dataArray[$key])) {
                     return $connection->send('b:0;');
                 }
-                $m = isset($data['value'][0]) ? $data['value'][0] : 4000;
-                $n = isset($data['value'][1]) ? $data['value'][1] : 14;
+                $m = isset($data['value'][0]) ? $data['value'][0] : 40000;
+                $k = isset($data['value'][1]) ? $data['value'][1] : 14;
                 $this->_dataArray[$key] = new BloomFilter($m, $k);
                 return $connection->send('b:1;');
+                break;
+            case 'bfAdd':
+                if (!isset($this->_dataArray[$key]) || !($this->_dataArray[$key] instanceof BloomFilter)) {
+                    return $connection->send('b:0;');
+                }
+                $this->_dataArray[$key]->add($data['value']);
+                return $connection->send('b:1;');
+                break;
+            case 'bfIn':
+                if (!isset($this->_dataArray[$key]) || !($this->_dataArray[$key] instanceof BloomFilter)) {
+                    return $connection->send('b:0;');
+                }
+                return $connection->send(serialize($this->_dataArray[$key]->maybeInSet($data['value'])));
                 break;
             default:
                 $connection->close(serialize('bad cmd ' . $cmd));
