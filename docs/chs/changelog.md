@@ -1,3 +1,7 @@
+## [版本 1.0.3](https://github.com/kiddyuchina/Beanbun/releases/tag/1.0.3) (2017-4-27)
+
+- 修改数据库类bug
+
 ## [版本 1.0.2](https://github.com/kiddyuchina/Beanbun/releases/tag/1.0.2) (2017-4-27)
 
 - 内存队列增加布隆过滤器算法记录已爬取网页，并默认使用布隆过滤器
