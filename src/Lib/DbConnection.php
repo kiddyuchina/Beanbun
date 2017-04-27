@@ -28,9 +28,6 @@ class DbConnection
                 {
                     $this->database_type = strtolower($options['database_type']);
                 }
-                if (!isset($option['charset'])) {
-                    $option['charset'] = 'utf'
-                }
             }
             else
             {

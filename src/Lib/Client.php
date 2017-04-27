@@ -74,7 +74,6 @@ class Client
                         \Workerman\Lib\Timer::del($timer_id);
                     }
                 }, array($connection));
-                echo '('.$timer_id.')';
             }
             $this->_globalConnections[$offset] = $connection;
         }
