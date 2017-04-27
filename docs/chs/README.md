@@ -39,12 +39,12 @@ require_once(__DIR__ . '/vendor/autoload.php');
 use Beanbun\Beanbun;
 $beanbun = new Beanbun;
 $beanbun->seed = [
-	'http://www.950d.com/',
-	'http://www.950d.com/list-1.html',
-	'http://www.950d.com/list-2.html',
+  'http://www.950d.com/',
+  'http://www.950d.com/list-1.html',
+  'http://www.950d.com/list-2.html',
 ];
 $beanbun->afterDownloadPage = function($beanbun) {
-	file_put_contents(__DIR__ . '/' . md5($beanbun->url), $beanbun->page);
+  file_put_contents(__DIR__ . '/' . md5($beanbun->url), $beanbun->page);
 };
 $beanbun->start();
 ```
@@ -120,15 +120,15 @@ $beanbun->seed = 'http://www.qiushibaike.com/';
 $beanbun->max = 30;
 $beanbun->logFile = __DIR__ . '/qiubai_access.log';
 $beanbun->urlFilter = [
-	'/http:\/\/www.qiushibaike.com\/8hr\/page\/(\d*)\?s=(\d*)/'
+  '/http:\/\/www.qiushibaike.com\/8hr\/page\/(\d*)\?s=(\d*)/'
 ];
 // 设置队列
 $beanbun->setQueue('memory', [
-	'host' => '127.0.0.1',
- 	'port' => '2207'
+  'host' => '127.0.0.1',
+  'port' => '2207'
  ]);
 $beanbun->afterDownloadPage = function($beanbun) {
-	file_put_contents(__DIR__ . '/' . md5($beanbun->url), $beanbun->page);
+  file_put_contents(__DIR__ . '/' . md5($beanbun->url), $beanbun->page);
 };
 $beanbun->start();
 ```
@@ -195,17 +195,17 @@ $beanbun->count = 10;
 $beanbun->seed = 'http://www.950.com/';
 // or
 $beanbun->seed = [
-	'http://www.950d.com/',
-	'http://www.950d.com/list-1.html',
-	[
-		'http://www.950d.com/list-2.html',
-		[
-			'timeout' => 10,
-			'headers' => [
-				'user-agent' => 'beanbun-spider',
-			]
-		]
-	]
+  'http://www.950d.com/',
+  'http://www.950d.com/list-1.html',
+  [
+    'http://www.950d.com/list-2.html',
+    [
+      'timeout' => 10,
+      'headers' => [
+        'user-agent' => 'beanbun-spider',
+      ]
+    ]
+  ]
 ];
 ```
 
@@ -219,7 +219,7 @@ $beanbun->seed = [
 
 ``` php
 $beanbun->urlFilter = [
-	'/http:\/\/www.950d.com\/list-(\d*).html/'
+  '/http:\/\/www.950d.com\/list-(\d*).html/'
 ];
 ```
 
@@ -318,7 +318,7 @@ $beanbun->hooks = [
 ``` php
 // 下载页面后写一条日志，记录进程下载页面成功
 $beanbun->afterDownloadPage = function($beanbun) {
-	$beanbun->log("beanbun worker id {$beanbun->id} download page success!");
+  $beanbun->log("beanbun worker id {$beanbun->id} download page success!");
 };
 // 2017-01-01 00:00:00 beanbun worker id 0 download page success!
 ```
@@ -333,7 +333,7 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 下载页面后写一条日志，记录爬取页面地址
 $beanbun->afterDownloadPage = function($beanbun) {
-	$beanbun->log("beanbun worker download {$beanbun->queue['url']} success!");
+  $beanbun->log("beanbun worker download {$beanbun->queue['url']} success!");
 };
 // 2017-01-01 00:00:00 beanbun worker download http://www.950d.com/ success!
 ```
@@ -348,7 +348,7 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 下载页面后写一条日志，记录爬取页面地址
 $beanbun->afterDownloadPage = function($beanbun) {
-	$beanbun->log("beanbun worker download {$beanbun->url} success!");
+  $beanbun->log("beanbun worker download {$beanbun->url} success!");
 };
 // 2017-01-01 00:00:00 beanbun worker GET http://www.950d.com/ success!
 ```
@@ -363,7 +363,7 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 下载页面后写一条日志，记录爬取页面地址
 $beanbun->afterDownloadPage = function($beanbun) {
-	$beanbun->log("beanbun worker {$beanbun->method} {$beanbun->queue['url']} success!");
+  $beanbun->log("beanbun worker {$beanbun->method} {$beanbun->queue['url']} success!");
 };
 // 2017-01-01 00:00:00 beanbun worker GET http://www.950d.com/ success!
 ```
@@ -378,7 +378,7 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 下载页面后写一条日志，记录user-agent信息
 $beanbun->afterDownloadPage = function($beanbun) {
-	$beanbun->log("user-agent is {beanbun->options['headers']['user-agent']}.");
+  $beanbun->log("user-agent is {beanbun->options['headers']['user-agent']}.");
 };
 // 2017-01-01 00:00:00 user-agent is Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0.
 ```
@@ -393,12 +393,12 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 下载页面后把网页内容保存在文件中
 $beanbun->afterDownloadPage = function($beanbun) {
-	file_put_contents(__DIR__ . '/' . md5($beanbun->url), $beanbun->page);
+  file_put_contents(__DIR__ . '/' . md5($beanbun->url), $beanbun->page);
 };
 
 // or 页面内容为JSON格式，转换成数组格式以备后用
 $beanbun->afterDownloadPage = function($beanbun) {
-	$beanbun->page = json_decode($beanbun->page, true);
+  $beanbun->page = json_decode($beanbun->page, true);
 }
 ```
 
@@ -421,7 +421,7 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 启动爬虫进程后写一条日志，记录进程启动成功
 $beanbun->startWorker = function($beanbun) {
-	$beanbun->log("beanbun worker id {$beanbun->id} start success.");
+  $beanbun->log("beanbun worker id {$beanbun->id} start success.");
 };
 // 2017-01-01 00:00:00 beanbun worker id 0 start success.
 ```
@@ -436,7 +436,7 @@ $beanbun->startWorker = function($beanbun) {
 ``` php
 // 关闭爬虫进程时写一条日志，记录进程关闭成功
 $beanbun->stopWorker = function($beanbun) {
-	$beanbun->log("beanbun worker id {$beanbun->id} stop success.");
+  $beanbun->log("beanbun worker id {$beanbun->id} stop success.");
 };
 // 2017-01-01 00:00:00 beanbun worker id 0 stop success.
 ```
@@ -451,11 +451,11 @@ $beanbun->stopWorker = function($beanbun) {
 ``` php
 // 爬取网页前给网页请求加上代理
 $beanbun->beforeDownloadPage = function($beanbun) {
-	$beanbun->options['proxy'] = '123.123.123.123:88';
+  $beanbun->options['proxy'] = '123.123.123.123:88';
 };
 // or
 functioin addProxy($beanbun) {
-	$beanbun->options['proxy'] = '123.123.123.123:88';
+  $beanbun->options['proxy'] = '123.123.123.123:88';
 }
 $beanbun->beforeDownloadPage = 'addProxy';
 ```
@@ -470,7 +470,7 @@ $beanbun->beforeDownloadPage = 'addProxy';
 ``` php
 // 改成用 file_get_contents 进行爬取
 $beanbun->downloadPage = function($beanbun) {
-	$beanbun->page = file_get_contents($beanbun->url);
+  $beanbun->page = file_get_contents($beanbun->url);
 };
 ```
 
@@ -484,12 +484,12 @@ $beanbun->downloadPage = function($beanbun) {
 ``` php
 // 下载页面后把网页内容保存在文件中
 $beanbun->afterDownloadPage = function($beanbun) {
-	file_put_contents(__DIR__ . '/' . md5($beanbun->url), $beanbun->page);
+  file_put_contents(__DIR__ . '/' . md5($beanbun->url), $beanbun->page);
 };
 
 // or 页面内容为JSON格式，转换成数组格式以备后用
 $beanbun->afterDownloadPage = function($beanbun) {
-	$beanbun->page = json_decode($beanbun->page, true);
+  $beanbun->page = json_decode($beanbun->page, true);
 }
 ```
 
@@ -503,8 +503,8 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 输出下载页面后发现的所有链接，不加入队列
 $beanbun->discoverUrl = function($beanbun) {
-	$urls = Helper::getUrlbyHtml($beanbun->page, $beanbun->url);
-	print_r($urls);
+  $urls = Helper::getUrlbyHtml($beanbun->page, $beanbun->url);
+  print_r($urls);
 };
 ```
 
@@ -518,7 +518,7 @@ $beanbun->discoverUrl = function($beanbun) {
 ``` php
 // 发现新的 url 加入队列后，在日志中记录当前队列长度。
 $beanbun->afterDiscover = function($beanbun) {
-	$beanbun->log("the queue number is {$beanbun->queue()->count()}.");
+  $beanbun->log("the queue number is {$beanbun->queue()->count()}.");
 };
 // 2017-01-01 00:00:00 the queue number is 28.
 ```
@@ -548,7 +548,7 @@ $beanbun->start();
 
 ``` php
 $beanbun->beforeDownloadPage = function($beanbun) {
-	$beanbun->log('this is a log.');
+  $beanbun->log('this is a log.');
 }; 
 // 2017-01-01 00:00:00 this is a log.
 ```
@@ -564,9 +564,9 @@ $beanbun->beforeDownloadPage = function($beanbun) {
 ``` php
 // 如下载网页内容小于 100 字符，则抛出异常，直接下载下一个网页。
 $beanbun->afterDownloadPage = function($beanbun) {
-	if (strlen($beanbun->page) < 100) {
-		$beanbun->error();
-	}
+  if (strlen($beanbun->page) < 100) {
+    $beanbun->error();
+  }
 }; 
 ```
 
@@ -580,9 +580,9 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 如下载网页内容小于 100 字符，则把地址重新加入队列。
 $beanbun->afterDownloadPage = function($beanbun) {
-	if (strlen($beanbun->page) < 100) {
-		$beanbun->queue()->add($beanbun->url);
-	}
+  if (strlen($beanbun->page) < 100) {
+    $beanbun->queue()->add($beanbun->url);
+  }
 }; 
 ```
 
@@ -596,8 +596,8 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 使用框架带有的内存队列
 $beanbun->setQueue('memory', [
-	'host' => '127.0.0.1',
-	'port' => '2207',
+  'host' => '127.0.0.1',
+  'port' => '2207',
 ]); 
 // $beanbun->queue() 将返回 new \Beanbun\Queue\MemoryQueue(['host' => '127.0.0.1', 'port' => '2207']);
 // or
@@ -617,10 +617,10 @@ $beanbun->setQueue(function($args){
 ``` php
 // 如下载网页内容小于 100 字符，则手动再重新下载一次。
 $beanbun->afterDownloadPage = function($beanbun) {
-	if (strlen($beanbun->page) < 100) {
-		$request = $beanbun->downloader()->request($beanbun->method, $beanbun->url, $beanbun->options);
-		$beanbun->page = $request->getBody();
-	}
+  if (strlen($beanbun->page) < 100) {
+    $request = $beanbun->downloader()->request($beanbun->method, $beanbun->url, $beanbun->options);
+    $beanbun->page = $request->getBody();
+  }
 }; 
 ```
 
@@ -658,7 +658,7 @@ $beanbun->downloadPage = function($beanbun) {
 $beanbun->middleware('customFunction');
 // or
 $beanbun->middleware(function($beanbun) {
-	$beanbun->log('middleware loading is complete.');
+  $beanbun->log('middleware loading is complete.');
 });
 // or
 $beanbun->middleware(new \CustomMiddleware);
@@ -683,11 +683,11 @@ $beanbun->middleware(new \CustomMiddleware, 'load');
 use Beanbun\Beanbun;
 // 每隔一天重新把首页加入队列
 $beanbun->startWorker = function($beanbun) {
-	if ($beanbun->id == 0) {
-		Beanbun::timer(86400, function() use($beanbun){
-			$beanbun->queue()->add('http://www.950d.com/');
-		});
-	}	
+  if ($beanbun->id == 0) {
+    Beanbun::timer(86400, function() use($beanbun){
+      $beanbun->queue()->add('http://www.950d.com/');
+    });
+  } 
 };
 ```
 
@@ -701,7 +701,7 @@ $beanbun->startWorker = function($beanbun) {
 ``` php
 use Beanbun\Beanbun;
 $beanbun->beforDownloadPage = function($beanbun) {
-	Beanbun::timerDel($timer_id);
+  Beanbun::timerDel($timer_id);
 };
 ```
 
@@ -976,11 +976,10 @@ echo Helper::randUserAgent('mobile');
 
 ## 数据库
 
-框架提供了的 mysql 数据库操作类。
+框架提供的数据库操作类，修改自 [Medoo](http://medoo.in/)。支持 MySQL, MariaDB, MSSQL (Windows/Linux/UNIX), Oracle, SQLite, PostgreSQL, Sybase。依赖相应的 pdo 扩展。
 
 
-
-### Beanbun\Lib\Db 类
+### Lib\Db 类
 
 #### config
 <p class="tip">
@@ -993,18 +992,22 @@ echo Helper::randUserAgent('mobile');
 use Beanbun\Lib\Db;
 Db::$config = [
     'zhihu' => [
-        'host' => '127.0.0.1',
+        'server' => '127.0.0.1',
         'port' => '3306',
-        'user' => 'zhihu',
+        'username' => 'zhihu',
         'password' => 'xxxxxx',
-        'dbname' => 'zhihu',
+        'database_name' => 'zhihu',
+        'database_type' => 'mysql',
+        'charset' => 'utf8',
     ],
     'qiushibaike' => [
-        'host' => '127.0.0.1',
+        'server' => '127.0.0.1',
         'port' => '3306',
-        'user' => 'qiushibaike',
+        'username' => 'qiushibaike',
         'password' => 'xxxxxx',
-        'dbname' => 'qiushibaike',
+        'database_name' => 'qiushibaike',
+        'database_type' => 'mysql',
+        'charset' => 'utf8',
     ],
 ];
 ```
@@ -1045,100 +1048,78 @@ use Beanbun\Lib\Db;
 Db::closeAll();
 ```
 
-### Beanbun\Lib\DbConnection 类
+### Lib\DbConnection 类
 
 ``` php
 use Beanbun\Lib\Db;
 
-// 获取所有数据
-Db::instance('zhihu')->select('ID,Sex')
-    ->from('Persons')
-    ->where('sex= :sex')
-    ->bindValues(array('sex'=>'M'))
-    ->query();
-//等价于
-Db::instance('zhihu')->select('ID,Sex')->from('Persons')->where("sex= 'F' ")->query();
-//等价于
-Db::instance('zhihu')->query("SELECT ID,Sex FROM `Persons` WHERE sex='M'");
+// select
+Db::instance('zhihu')->select("account", [
+    "user_name",
+    "email"
+], [
+    "user_id[>]" => 100
+]);
 
+// insert
+Db::instance('zhihu')->insert("account", [
+    "user_name" => "foo",
+    "email" => "foo@bar.com",
+    "age" => 25
+]);
 
-// 获取一行数据
-Db::instance('zhihu')->select('ID,Sex')
-    ->from('Persons')
-    ->where('sex= :sex')
-    ->bindValues(array('sex'=>'M'))
-    ->row();
-//等价于
-Db::instance('zhihu')->select('ID,Sex')->from('Persons')->where("sex= 'F' ")->row();
-//等价于
-Db::instance('zhihu')->row("SELECT ID,Sex FROM `Persons` WHERE sex='M'");
+// update
+Db::instance('zhihu')->update("account", [
+    "type" => "user",
+ 
+    // All age plus one
+    "age[+]" => 1,
+ 
+    // All level subtract 5
+    "level[-]" => 5,
+ 
+    // All score multiplied by 2
+    "score[*]" => 2,
+ 
+    // Like insert, you can assign the serialization
+    "lang" => ["en", "fr", "jp", "cn", "de"],
+ 
+    "(JSON) fav_lang" => ["en", "fr", "jp", "cn", "de"],
+ 
+    // You can also assign # for using SQL functions
+    "#uid" => "UUID()"
+], [
+    "user_id[<]" => 1000
+]);
 
-
-// 获取一列数据
-Db::instance('zhihu')->select('ID')
-    ->from('Persons')
-    ->where('sex= :sex')
-    ->bindValues(array('sex'=>'M'))
-    ->column();
-//等价于
-Db::instance('zhihu')->select('ID')->from('Persons')->where("sex= 'F' ")->column();
-//等价于
-Db::instance('zhihu')->column("SELECT `ID` FROM `Persons` WHERE sex='M'");
-
-// 获取单个值
-Db::instance('zhihu')->select('ID,Sex')
-    ->from('Persons')
-    ->where('sex= :sex')
-    ->bindValues(array('sex'=>'M'))
-    ->single();
-//等价于
-Db::instance('zhihu')->select('ID,Sex')->from('Persons')->where("sex= 'F' ")->single();
-//等价于
-Db::instance('zhihu')->single("SELECT ID,Sex FROM `Persons` WHERE sex='M'");
-
-// 复杂查询
-Db::instance('zhihu')->select('*')->from('table1')
-    ->innerJoin('table2','table1.uid = table2.uid')
-    ->where('age > :age')->groupBy(array('aid'))
-    ->having('foo="foo"')->orderByASC/*orderByDESC*/(array('did'))
-    ->limit(10)->offset(20)->bindValues(array('age' => 13));
-// 等价于
-Db::instance('zhihu')->query(SELECT * FROM `table1` 
-    INNER JOIN `table2` ON `table1`.`uid` = `table2`.`uid`
-    WHERE age > 13 GROUP BY aid HAVING foo="foo" 
-    ORDER BY did LIMIT 10 OFFSET 20“);
-
-// 插入
-$insert_id = Db::instance('zhihu')->insert('Persons')->cols(array(
-    'Firstname'=>'abc',
-    'Lastname'=>'efg',
-    'Sex'=>'M',
-    'Age'=>13))->query();
-等价于
-$insert_id = Db::instance('zhihu')->query("INSERT INTO `Persons` ( `Firstname`,`Lastname`,`Sex`,`Age`)
-VALUES ( 'abc', 'efg', 'M', 13)");
-
-// 更新
-$row_count = Db::instance('zhihu')->update('Persons')->cols(array('sex'))->where('ID=1')
-->bindValue('sex', 'F')->query();
-// 等价于
-$row_count = Db::instance('zhihu')->update('Persons')->cols(array('sex'=>'F'))->where('ID=1')->query();
-// 等价于
-$row_count = Db::instance('zhihu')->query("UPDATE `Persons` SET `sex` = 'F' WHERE ID=1");
-
-// 删除
-$row_count = Db::instance('zhihu')->delete('Persons')->where('ID=9')->query();
-// 等价于
-$row_count = Db::instance('zhihu')->query("DELETE FROM `Persons` WHERE ID=9");
+// delete
+Db::instance('zhihu')->delete("account", [
+    "AND" => [
+        "type" => "business",
+        "age[<]" => 18
+    ]
+]);
 
 // 事务
-Db::instance('zhihu')->beginTrans();
-....
-Db::instance('zhihu')->commitTrans();
-// or
-Db::instance('zhihu')->rollBackTrans();
+Db::instance('zhihu')->action(function($database) {
+    $database->insert("account", [
+        "name" => "foo",
+        "email" => "bar@abc.com"
+    ]);
+ 
+    $database->delete("account", [
+        "user_id" => 2312
+    ]);
+ 
+    // If you want to  find something wrong, just return false to rollback the whole transaction.
+    if ($database->has("post", ["user_id" => 2312]))
+    {
+        return false;
+    }
+});
 ```
 
+更多用法，请参考 Medoo [文档](http://medoo.in/doc)。
 
 
 
