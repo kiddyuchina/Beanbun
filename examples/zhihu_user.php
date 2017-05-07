@@ -8,8 +8,8 @@ require_once(__DIR__ . '/vendor/autoload.php');
 Db::$config['zhihu'] = [
     'server' => '127.0.0.1',
     'port' => '3306',
-    'username' => 'root',
-    'password' => 'winMain!880818',
+    'username' => 'xxx',
+    'password' => 'xxx',
     'database_name' => 'zhihu',
     'charset' => 'utf8',
 ];
