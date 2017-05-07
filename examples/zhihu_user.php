@@ -27,10 +27,11 @@ function getProxies($beanbun) {
             $proxy = strtolower($match[4][$k]) . "://{$v}:{$match[2][$k]}";
             echo "get proxy $proxy ";
             try {
-                $res = $client->get('http://mail.163.com', [
+                $client->get('http://mail.163.com', [
                     'proxy' => $proxy,
                     'timeout' => 6
                 ]);
+                $beanbun->proxies[] = $proxy;
                 echo "success.\n";
             } catch (\Exception $e) {
                 echo "error.\n";
