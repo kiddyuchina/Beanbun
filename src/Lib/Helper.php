@@ -1,5 +1,6 @@
 <?php
 namespace Beanbun\Lib;
+
 Class Helper
 {
 	public static $userAgent = [
@@ -30,6 +31,7 @@ Class Helper
         	'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12A366 Safari/600.1.4'
 	    ]
 	];
+
 	public static function getUrlbyHtml($html, $url)
 	{
 		$pattern = "'<\s*a\s.*?href\s*=\s*([\"\'])?(?(1) (.*?)\\1 | ([^\s\>]+))'isx";
@@ -41,6 +43,7 @@ Class Helper
         }
         return array_flip(array_flip($hrefs));
 	}
+
 	public static function formatUrl($l1, $l2)
 	{
 		if(strlen($l1) > 0){ 
@@ -87,12 +90,15 @@ Class Helper
 	        return $I1 = $l3.$path.'/'.$I1;
 	    }
 	}
+
 	public static function getDomain($url)
 	{
 		$parseUrl = parse_url($url);
 		$domain = $parseUrl['scheme'].'://';
+
 		return $domain;
 	}
+
 	public static function randUserAgent($type = 'pc')
 	{
 		switch (self::$userAgent) {
