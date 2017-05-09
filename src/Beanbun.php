@@ -37,6 +37,7 @@ class Beanbun
     public $discoverUrl = '';
     public $afterDiscover = '';
     public $stopWorker = '';
+    public $exceptionHandler = '';
 
     public $hooks = [
         'startWorkerHooks',
@@ -205,6 +206,10 @@ class Beanbun
         if ($this->stopWorker) {
             $this->stopWorkerHooks[] = $this->stopWorker;
         }
+
+        if (!$this->exceptionHandler) {
+            $this->exceptionHandler = [$this, 'defaultExceptionHandler'];
+        }
     }
 
     // 爬虫进程
@@ -294,10 +299,6 @@ class Beanbun
                     call_user_func($hook, $this);
                 }
             }
-        } catch (BeanbunException $e) {
-            if ($e->getMessage()) {
-                $this->log($e->getMessage());
-            }
         } catch (Exception $e) {
             $this->log($e->getMessage());
             if ($this->daemonize) {
@@ -305,6 +306,7 @@ class Beanbun
             } else {
                 $this->seed[] = $this->queue;
             }
+            call_user_func($this->exceptionHandler, $e);
         }
 
         $this->queue = '';
@@ -318,6 +320,22 @@ class Beanbun
     {
         foreach($this->stopWorkerHooks as $hook) {
             call_user_func($hook, $this);
+        }
+    }
+
+    public function defaultExceptionHandler(Exception $e)
+    {
+        if ($e instanceof BeanbunException) {
+            if ($e->getMessage()) {
+                $this->log($e->getMessage());
+            }
+        } elseif ($e instanceof Exception) {
+            $this->log($e->getMessage());
+            if ($this->daemonize) {
+                $this->queue()->add($this->queue['url'], $this->queue['options']);
+            } else {
+                $this->seed[] = $this->queue;
+            }
         }
     }
 
