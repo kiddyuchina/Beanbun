@@ -37,11 +37,11 @@ Class Helper
         $pattern = "'<\s*a\s.*?href\s*=\s*([\"\'])?(?(1) (.*?)\\1 | ([^\s\>]+))'isx";
         preg_match_all($pattern, $html, $match);
         $match = array_merge($match[2], $match[3]);
-        $hrefs = array_unique($match);
+        $hrefs = array_filter(array_unique($match));
         foreach ($hrefs as $key => $href) {
             $hrefs[$key] = self::formatUrl($href, $url);
         }
-        return array_unique($hrefs);
+        return array_filter(array_unique($hrefs));
     }
 
     public static function formatUrl($l1, $l2)
