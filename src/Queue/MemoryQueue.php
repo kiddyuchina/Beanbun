@@ -53,6 +53,9 @@ class MemoryQueue implements QueueInterface
         if (isset($config['algorithm'])) {
             $this->algorithm = $config['algorithm'] != 'breadth' ? 'depth' : 'breadth';
         }
+        if (isset($config['bloomFilter']) && !$config['bloomFilter']) {
+            $this->bloomFilter = false;
+        }
 
         $this->globalData->add($this->key, []);
         if ($this->bloomFilter) {

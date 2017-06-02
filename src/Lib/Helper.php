@@ -101,7 +101,7 @@ Class Helper
 
 	public static function randUserAgent($type = 'pc')
 	{
-		switch (self::$userAgent) {
+		switch ($type) {
 			case 'pc':
 				return self::$userAgentArray['pc'][array_rand(self::$userAgentArray['pc'])].rand(0, 10000);
 				break;
