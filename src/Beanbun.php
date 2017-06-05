@@ -130,6 +130,8 @@ class Beanbun
         }
 
         if ($this->daemonize) {
+            $this->check();
+
             $worker = new Worker;
             $worker->count = $this->count;
             $worker->name = $this->name;
@@ -152,6 +154,50 @@ class Beanbun
             while (count($this->seed)) {
                 $this->crawler();
             }
+        }
+    }
+
+    public function check()
+    {
+        $error = false;
+        $text = '';
+        $version_ok = $pcntl_loaded = $posix_loaded = true;
+        if(!version_compare(phpversion(), "5.3.3", ">=")) {
+            $text .= "PHP Version >= 5.3.3                 " . ($version_ok ? "\033[32;40m [OK] \033[0m\n" : "\033[31;40m [fail] \033[0m\n");
+            $error = true;
+        }
+
+        if(!in_array("pcntl", get_loaded_extensions())) {
+            $text .= "Extension posix check                " . ($posix_loaded ? "\033[32;40m [OK] \033[0m\n" : "\033[31;40m [fail] \033[0m\n");
+            $error = true;
+        }
+
+        if(!in_array("posix", get_loaded_extensions())) {
+            $text .= "Extension posix check                " . ($posix_loaded ? "\033[32;40m [OK] \033[0m\n" : "\033[31;40m [fail] \033[0m\n");
+            $error = true;
+        }
+
+        $check_func_map = array(
+            "stream_socket_server",
+            "stream_socket_client",
+            "pcntl_signal_dispatch",
+        );
+
+        if($disable_func_string = ini_get("disable_functions")) {
+            $disable_func_map = array_flip(explode(",", $disable_func_string));
+        }
+
+        foreach($check_func_map as $func) {
+            if(isset($disable_func_map[$func])) {
+                $text .= "\n\033[31;40mFunction " . impode(', ', $check_func_map) . "may be disabled. Please check disable_functions in php.ini\033[0m\n";
+                $error = true;
+                break;
+            }
+        }
+
+        if ($error) {
+            echo $text;
+            exit;
         }
     }
 
