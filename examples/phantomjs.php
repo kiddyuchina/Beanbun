@@ -10,14 +10,14 @@ $beanbun->count = 5;
 $beanbun->interval = 2;
 $beanbun->timeout = 10;
 $beanbun->seed = [
-	'https://www.zhihu.com/question/23660494',
-	'https://www.zhihu.com/question/23010225',
+    'https://www.zhihu.com/question/23660494',
+    'https://www.zhihu.com/question/23010225',
 ];
 $beanbun->logFile = __DIR__ . '/phantom_access.log';
 
 $beanbun->downloadPage = function ($beanbun) {
-	$client = Client::getInstance();
-	$client->getEngine()->setPath('/Users/kiddyu/Documents/phantomjs/bin/phantomjs');
+    $client = Client::getInstance();
+    $client->getEngine()->setPath('/Users/kiddyu/Documents/phantomjs/bin/phantomjs');
     
     $width  = 1440;
     $height = 6000;
