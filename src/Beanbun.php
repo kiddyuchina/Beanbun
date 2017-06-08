@@ -189,7 +189,7 @@ class Beanbun
 
         foreach($check_func_map as $func) {
             if(isset($disable_func_map[$func])) {
-                $text .= "\n\033[31;40mFunction " . impode(', ', $check_func_map) . "may be disabled. Please check disable_functions in php.ini\033[0m\n";
+                $text .= "\n\033[31;40mFunction " . implode(', ', $check_func_map) . "may be disabled. Please check disable_functions in php.ini\033[0m\n";
                 $error = true;
                 break;
             }
