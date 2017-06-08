@@ -163,17 +163,17 @@ class Beanbun
         $text = '';
         $version_ok = $pcntl_loaded = $posix_loaded = true;
         if(!version_compare(phpversion(), "5.3.3", ">=")) {
-            $text .= "PHP Version >= 5.3.3                 \033[31;40m [fail] \033[0m\n");
+            $text .= "PHP Version >= 5.3.3                 \033[31;40m [fail] \033[0m\n";
             $error = true;
         }
 
         if(!in_array("pcntl", get_loaded_extensions())) {
-            $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n");
+            $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n";
             $error = true;
         }
 
         if(!in_array("posix", get_loaded_extensions())) {
-            $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n");
+            $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n";
             $error = true;
         }
 
