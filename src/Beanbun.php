@@ -163,17 +163,17 @@ class Beanbun
         $text = '';
         $version_ok = $pcntl_loaded = $posix_loaded = true;
         if(!version_compare(phpversion(), "5.3.3", ">=")) {
-            $text .= "PHP Version >= 5.3.3                 " . ($version_ok ? "\033[32;40m [OK] \033[0m\n" : "\033[31;40m [fail] \033[0m\n");
+            $text .= "PHP Version >= 5.3.3                 \033[31;40m [fail] \033[0m\n");
             $error = true;
         }
 
         if(!in_array("pcntl", get_loaded_extensions())) {
-            $text .= "Extension posix check                " . ($posix_loaded ? "\033[32;40m [OK] \033[0m\n" : "\033[31;40m [fail] \033[0m\n");
+            $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n");
             $error = true;
         }
 
         if(!in_array("posix", get_loaded_extensions())) {
-            $text .= "Extension posix check                " . ($posix_loaded ? "\033[32;40m [OK] \033[0m\n" : "\033[31;40m [fail] \033[0m\n");
+            $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n");
             $error = true;
         }
 
@@ -189,7 +189,7 @@ class Beanbun
 
         foreach($check_func_map as $func) {
             if(isset($disable_func_map[$func])) {
-                $text .= "\n\033[31;40mFunction " . implode(', ', $check_func_map) . "may be disabled. Please check disable_functions in php.ini\033[0m\n";
+                $text .= "\033[31;40mFunction " . implode(', ', $check_func_map) . "may be disabled. Please check disable_functions in php.ini\033[0m\n";
                 $error = true;
                 break;
             }

@@ -3,7 +3,7 @@ namespace Beanbun\Lib;
 
 Class Helper
 {
-	public static $userAgent = [
+	public static $userAgentArray = [
 		'pc' => [
 			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
 	        'Mozilla/5.0 (X11; Linux x86_64; rv:29.0) Gecko/20100101 Firefox/29.0',
