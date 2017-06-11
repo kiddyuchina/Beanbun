@@ -503,7 +503,7 @@ $beanbun->afterDownloadPage = function($beanbun) {
 ``` php
 // 输出下载页面后发现的所有链接，不加入队列
 $beanbun->discoverUrl = function($beanbun) {
-  $urls = Helper::getUrlbyHtml($beanbun->page, $beanbun->url);
+  $urls = Helper::getUrlByHtml($beanbun->page, $beanbun->url);
   print_r($urls);
 };
 ```
@@ -727,7 +727,7 @@ $beanbun->beforDownloadPage = function($beanbun) {
 ``` php
 // 取出页面中所有的 url 加入队列，均以 POST 来请求
 $beanbun->discoverUrl = function ($beanbun) {
-    $urls = Helper::getUrlbyHtml($beanbun->page, $beanbun->url);
+    $urls = Helper::getUrlByHtml($beanbun->page, $beanbun->url);
     foreach ($urls as $url) {
         $beanbun->queue()->add($url, [
             'method' => 'POST'
@@ -913,7 +913,7 @@ Helper 类中定义了一些辅助方法，帮助用户更方便的爬取网页
 
 ### 静态方法
 
-#### getUrlbyHtml
+#### getUrlByHtml
 <p class="tip">
   返回网页中的完整链接。接受两个参数，第一个参数为网页 html，第二个参数为网页的 url
 </p>
@@ -931,7 +931,7 @@ $html =<<<STR
 </ul>
 STR;
 
-$urls = Helper::getUrlbyHtml($html, $url);
+$urls = Helper::getUrlByHtml($html, $url);
 print_r($urls);
 
 // Array

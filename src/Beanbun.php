@@ -1,8 +1,8 @@
 <?php
 namespace Beanbun;
 
-use Beanbun\Lib\Helper;
 use Beanbun\Exception\BeanbunException;
+use Beanbun\Lib\Helper;
 use Exception;
 use GuzzleHttp\Client;
 use Workerman\Lib\Timer;
@@ -10,7 +10,7 @@ use Workerman\Worker;
 
 class Beanbun
 {
-    const VERSION = '1.0.3';
+    const VERSION = '1.0.4';
 
     public $id = null;
     public $name = null;
@@ -86,8 +86,8 @@ class Beanbun
         global $argv;
         $this->commands = $argv;
         $this->name = isset($config['name'])
-            ? $config['name']
-            : current(explode('.', $this->commands[0]));
+        ? $config['name']
+        : current(explode('.', $this->commands[0]));
         $this->logFile = isset($config['logFile']) ? $config['logFile'] : __DIR__ . '/' . $this->name . '_access.log';
         $this->setQueue();
         $this->setDownloader();
@@ -162,17 +162,17 @@ class Beanbun
         $error = false;
         $text = '';
         $version_ok = $pcntl_loaded = $posix_loaded = true;
-        if(!version_compare(phpversion(), "5.3.3", ">=")) {
+        if (!version_compare(phpversion(), "5.3.3", ">=")) {
             $text .= "PHP Version >= 5.3.3                 \033[31;40m [fail] \033[0m\n";
             $error = true;
         }
 
-        if(!in_array("pcntl", get_loaded_extensions())) {
+        if (!in_array("pcntl", get_loaded_extensions())) {
             $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n";
             $error = true;
         }
 
-        if(!in_array("posix", get_loaded_extensions())) {
+        if (!in_array("posix", get_loaded_extensions())) {
             $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n";
             $error = true;
         }
@@ -183,12 +183,12 @@ class Beanbun
             "pcntl_signal_dispatch",
         );
 
-        if($disable_func_string = ini_get("disable_functions")) {
+        if ($disable_func_string = ini_get("disable_functions")) {
             $disable_func_map = array_flip(explode(",", $disable_func_string));
         }
 
-        foreach($check_func_map as $func) {
-            if(isset($disable_func_map[$func])) {
+        foreach ($check_func_map as $func) {
+            if (isset($disable_func_map[$func])) {
                 $text .= "\033[31;40mFunction " . implode(', ', $check_func_map) . "may be disabled. Please check disable_functions in php.ini\033[0m\n";
                 $error = true;
                 break;
@@ -203,7 +203,7 @@ class Beanbun
 
     public function initHooks()
     {
-        $this->startWorkerHooks[] = function($beanbun) {
+        $this->startWorkerHooks[] = function ($beanbun) {
             $beanbun->id = $beanbun->worker->id;
             $beanbun->log("Beanbun worker {$beanbun->id} is starting ...");
         };
@@ -212,7 +212,7 @@ class Beanbun
             $this->startWorkerHooks[] = $this->startWorker;
         }
 
-        $this->startWorkerHooks[] = function($beanbun) {
+        $this->startWorkerHooks[] = function ($beanbun) {
             $beanbun->queue()->maxQueueSize = $beanbun->max;
             $beanbun->timer_id = Beanbun::timer($beanbun->interval, [$beanbun, 'crawler']);
         };
@@ -244,7 +244,7 @@ class Beanbun
         }
 
         if ($this->daemonize) {
-            $this->afterDiscoverHooks[] = function($beanbun) {
+            $this->afterDiscoverHooks[] = function ($beanbun) {
                 $beanbun->queue()->queued($beanbun->queue);
             };
         }
@@ -261,7 +261,7 @@ class Beanbun
     // 爬虫进程
     public function onWorkerStart($worker)
     {
-        foreach($this->startWorkerHooks as $hook) {
+        foreach ($this->startWorkerHooks as $hook) {
             call_user_func($hook, $this);
         }
     }
@@ -277,8 +277,7 @@ class Beanbun
     public function setQueue($callback = null, $args = [
         'host' => '127.0.0.1',
         'port' => '2207',
-    ])
-    {
+    ]) {
         if ($callback === 'memory' || $callback === null) {
             $this->queueFactory = function ($args) {
                 return new \Beanbun\Queue\MemoryQueue($args);
@@ -290,7 +289,7 @@ class Beanbun
         } else {
             $this->queueFactory = $callback;
         }
-        
+
         $this->queueArgs = $args;
     }
 
@@ -322,10 +321,10 @@ class Beanbun
     public function setLog($callback = null)
     {
         $this->logFactory = $callback === null
-            ? function ($msg, $beanbun) {
-                echo date('Y-m-d H:i:s') . " {$beanbun->name} : $msg\n";
-            }
-            : $callback;
+        ? function ($msg, $beanbun) {
+            echo date('Y-m-d H:i:s') . " {$beanbun->name} : $msg\n";
+        }
+        : $callback;
     }
 
     public function error($msg = null)
@@ -340,8 +339,8 @@ class Beanbun
             array_shift($allHooks);
             array_pop($allHooks);
 
-            foreach($allHooks as $hooks) {
-                foreach($this->$hooks as $hook) {
+            foreach ($allHooks as $hooks) {
+                foreach ($this->$hooks as $hook) {
                     call_user_func($hook, $this);
                 }
             }
@@ -364,7 +363,7 @@ class Beanbun
 
     public function onWorkerStop($worker)
     {
-        foreach($this->stopWorkerHooks as $hook) {
+        foreach ($this->stopWorkerHooks as $hook) {
             call_user_func($hook, $this);
         }
     }
@@ -407,7 +406,7 @@ class Beanbun
         if (!is_array($queue)) {
             $this->queue = $queue = [
                 'url' => $queue,
-                'options' => []
+                'options' => [],
             ];
         }
 
@@ -471,6 +470,6 @@ class Beanbun
             $middleware->$action($this);
         } else {
             call_user_func($middleware, $this);
-        } 
+        }
     }
 }

@@ -30,7 +30,7 @@ class MemoryQueue implements QueueInterface
             }
             echo "Memory queue is starting...\n";
             fclose(STDOUT);
-            $STDOUT = fopen(__DIR__.'/server.log', "a");
+            $STDOUT = fopen(__DIR__ . '/server.log', "a");
 
             self::$server[$key] = '';
         } elseif ($argv[1] == 'stop') {
@@ -39,7 +39,7 @@ class MemoryQueue implements QueueInterface
 
         $globalServer = new Server($ip, $port);
         Worker::$daemonize = true;
-        Worker::$stdoutFile = __DIR__.'/server.log';
+        Worker::$stdoutFile = __DIR__ . '/server.log';
         @Worker::runAll();
     }
 
@@ -63,12 +63,12 @@ class MemoryQueue implements QueueInterface
         } else {
             $this->globalData->add($this->queuedKey, []);
         }
-        
+
         $this->globalData->add('beanbun', []);
 
         if (!isset($this->globalData->beanbun[$this->name])) {
             $name = $this->name;
-            $this->globalData->up('beanbun', function($value) use($name) {
+            $this->globalData->up('beanbun', function ($value) use ($name) {
                 if (!in_array($name, $value)) {
                     $value[] = $name;
                 }
@@ -80,7 +80,7 @@ class MemoryQueue implements QueueInterface
     public function add($url, $options = [])
     {
         if ($this->maxQueueSize != 0 && $this->count() >= $this->maxQueueSize) {
-            return ;
+            return;
         }
 
         $queue = [
@@ -89,14 +89,14 @@ class MemoryQueue implements QueueInterface
         ];
 
         if ($this->isQueued($queue)) {
-            return ;
+            return;
         }
-        
+
         $this->globalData->push($this->key, $queue);
     }
 
     public function next()
-    {   
+    {
         if ($this->algorithm == 'depth') {
             $queue = $this->globalData->shift($this->key);
         } else {
@@ -147,7 +147,7 @@ class MemoryQueue implements QueueInterface
         unset($this->globalData->{$this->key});
         unset($this->globalData->{$this->queuedKey});
         $name = $this->name;
-        $this->globalData->up('beanbun', function($value) use($name){
+        $this->globalData->up('beanbun', function ($value) use ($name) {
             $key = array_search($name, $value);
             if ($key !== false) {
                 unset($value[$key]);

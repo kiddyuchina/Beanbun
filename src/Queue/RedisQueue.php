@@ -47,7 +47,7 @@ class RedisQueue implements QueueInterface
     public function add($url, $options = [])
     {
         if ($this->maxQueueSize != 0 && $this->count() >= $this->maxQueueSize) {
-            return ;
+            return;
         }
 
         $queue = serialize([
@@ -56,7 +56,7 @@ class RedisQueue implements QueueInterface
         ]);
 
         if ($this->isQueued($queue)) {
-            return ;
+            return;
         }
 
         $this->getInstance()->rPush($this->key, $queue);
@@ -135,7 +135,7 @@ class RedisQueue implements QueueInterface
         while ($index < $this->bfHashCount) {
             $crc = $this->hash($item, $index);
             $pipe->getbit($this->queuedKey, $crc);
-            $index ++;
+            $index++;
         }
         $result = $pipe->exec();
         return !in_array(0, $result);
