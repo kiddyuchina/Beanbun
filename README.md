@@ -1,8 +1,8 @@
-<p align="center"><a href="https://github.com/kiddyuchina/Beanbun" target="_blank"><img width="150"src="http://otek15iea.bkt.clouddn.com/beanbun.jpg"></a></p>
+<p align="center"><a href="https://github.com/kiddyuchina/Beanbun" target="_blank"><img width="200"src="http://otek15iea.bkt.clouddn.com/beanbun.jpg"></a></p>
  
  <p align="center">
   <a href="https://github.com/kiddyuchina/Beanbun/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square" alt="Build Status"></a>
-  <a href="https://github.com/kiddyuchina/Beanbun/issues?q=is%3Aissue+is%3Aclosed"><img src="https://img.shields.io/github/issues-closed/kiddyuchina/Beanbun.svg" alt="License"></a>
+  <a href="https://github.com/kiddyuchina/Beanbun/issues?q=is%3Aissue+is%3Aclosed"><img src="https://img.shields.io/github/issues-closed/kiddyuchina/Beanbun.svg?style=flat-square" alt="License"></a>
   <a href="#"><img src="https://img.shields.io/badge/version-1.0.4-red.svg?style=flat-square" alt="Sauce Test Status"></a>
 </p>
 
