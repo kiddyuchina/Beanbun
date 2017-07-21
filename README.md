@@ -1,4 +1,4 @@
-<p align="center"><a href="https://github.com/kiddyuchina/Beanbun" target="_blank"><img width="200"src="http://otek15iea.bkt.clouddn.com/beanbun.jpg"></a></p>
+<p align="center"><a href="https://github.com/kiddyuchina/Beanbun" target="_blank"><img width="200"src="http://otek15iea.bkt.clouddn.com/logo.jpg"></a></p>
  
  <p align="center">
   <a href="https://github.com/kiddyuchina/Beanbun/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square" alt="Build Status"></a>
@@ -57,7 +57,7 @@ $ php start.php
 接下来就可以看到抓取的日志了。
 
 ### 插件
-beanbun-parser 数据抽取插件 https://github.com/kiddyuchina/beanbun-parser
+- beanbun-parser 数据抽取插件 https://github.com/kiddyuchina/beanbun-parser
   
 更多详细内容，请查看 [文档](http://www.beanbun.org)
 
