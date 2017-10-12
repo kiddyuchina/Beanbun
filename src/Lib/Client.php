@@ -236,6 +236,26 @@ class Client
     }
 
     /**
+     * PushIfNotExist.
+     * @param string $key
+     * @throws \Exception
+     */
+    public function pushIfNotExist($key, $value = false)
+    {
+        if ($value === false) {
+            return false;
+        }
+
+        $connection = $this->getConnection($key);
+        $this->writeToRemote(array(
+            'cmd' => 'pushIfNotExist',
+            'key' => $key,
+            'value' => $value,
+        ), $connection);
+        return $this->readFromRemote($connection);
+    }
+
+    /**
      * Shift.
      * @param string $key
      * @throws \Exception

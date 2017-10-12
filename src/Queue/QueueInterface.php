@@ -14,4 +14,6 @@ interface QueueInterface
     public function queuedCount();
 
     public function isQueued($url);
+
+    public function clean();
 }

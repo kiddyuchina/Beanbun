@@ -79,20 +79,20 @@ class MemoryQueue implements QueueInterface
 
     public function add($url, $options = [])
     {
-        if ($this->maxQueueSize != 0 && $this->count() >= $this->maxQueueSize) {
+        if (!$url && ($this->maxQueueSize != 0 && $this->count() >= $this->maxQueueSize)) {
             return;
         }
 
-        $queue = [
+        $queue = serialize([
             'url' => $url,
             'options' => $options,
-        ];
+        ]);
 
         if ($this->isQueued($queue)) {
             return;
         }
 
-        $this->globalData->push($this->key, $queue);
+        $this->globalData->pushIfNotExist($this->key, $queue);
     }
 
     public function next()
@@ -106,7 +106,7 @@ class MemoryQueue implements QueueInterface
         if ($this->isQueued($queue)) {
             return $this->next();
         } else {
-            return $queue;
+            return unserialize($queue);
         }
     }
 
@@ -127,9 +127,9 @@ class MemoryQueue implements QueueInterface
     public function isQueued($queue)
     {
         if ($this->bloomFilter) {
-            return $this->globalData->bfIn($this->queuedKey, md5(serialize($queue)));
+            return $this->globalData->bfIn($this->queuedKey, md5($queue));
         } else {
-            return in_array(serialize($queue), $this->globalData->{$this->queuedKey});
+            return in_array($queue, $this->globalData->{$this->queuedKey});
         }
     }
 

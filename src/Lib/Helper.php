@@ -41,7 +41,7 @@ class Helper
         foreach ($hrefs as $key => $href) {
             $hrefs[$key] = self::formatUrl($href, $url);
         }
-        return array_flip(array_flip($hrefs));
+        return array_flip(array_flip(array_filter($hrefs)));
     }
 
     public static function formatUrl($l1, $l2)

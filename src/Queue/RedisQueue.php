@@ -46,7 +46,7 @@ class RedisQueue implements QueueInterface
 
     public function add($url, $options = [])
     {
-        if ($this->maxQueueSize != 0 && $this->count() >= $this->maxQueueSize) {
+        if (!$url || ($this->maxQueueSize != 0 && $this->count() >= $this->maxQueueSize)) {
             return;
         }
 

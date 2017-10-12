@@ -345,12 +345,6 @@ class Beanbun
                 }
             }
         } catch (Exception $e) {
-            $this->log($e->getMessage());
-            if ($this->daemonize) {
-                $this->queue()->add($this->queue['url'], $this->queue['options']);
-            } else {
-                $this->seed[] = $this->queue;
-            }
             call_user_func($this->exceptionHandler, $e);
         }
 
