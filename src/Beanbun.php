@@ -390,6 +390,12 @@ class Beanbun
             $this->queue = $queue = $this->queue()->next();
         } else {
             $queue = array_shift($this->seed);
+            if (is_array($queue)) {
+				$queue = [
+					'url' => $queue[0],
+					'options' => $queue[1],
+				];
+			}
         }
 
         if (is_null($queue) || !$queue) {
