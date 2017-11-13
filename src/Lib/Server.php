@@ -107,6 +107,18 @@ class Server
                 }
                 return $connection->send(serialize(array_push($this->_dataArray[$key], $data['value'])));
                 break;
+            case 'pushToLeftIfNotExist':
+                if (!isset($this->_dataArray[$key])) {
+                    return $connection->send('b:0;');
+                }
+                if (!is_array($this->_dataArray[$key])) {
+                    $this->_dataArray[$key] = array();
+                }
+                if (in_array($data['value'], $this->_dataArray[$key])) {
+                    return $connection->send('b:1;');
+                }
+                return $connection->send(serialize(array_unshift($this->_dataArray[$key], $data['value'])));
+                break;
             case 'shift':
                 if (!isset($this->_dataArray[$key])) {
                     return $connection->send('b:0;');

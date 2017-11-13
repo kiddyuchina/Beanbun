@@ -266,7 +266,9 @@ class Beanbun
 
         if ($this->daemonize) {
             $this->afterDiscoverHooks[] = function ($beanbun) {
-                $beanbun->queue()->queued($beanbun->queue);
+                if ($beanbun->options['reserve'] == false) {
+                    $beanbun->queue()->queued($beanbun->queue);
+                }
             };
         }
 
@@ -411,12 +413,6 @@ class Beanbun
             $this->queue = $queue = $this->queue()->next();
         } else {
             $queue = array_shift($this->seed);
-            if (is_array($queue)) {
-				$queue = [
-					'url' => $queue[0],
-					'options' => $queue[1],
-				];
-			}
         }
 
         if (is_null($queue) || !$queue) {
@@ -433,11 +429,11 @@ class Beanbun
 
         $options = array_merge([
             'headers' => [],
-            'reserve' => true,
+            'reserve' => false,
             'timeout' => $this->timeout,
         ], (array) $queue['options']);
 
-        if ($this->daemonize && $options['reserve'] && $this->queue()->isQueued($queue)) {
+        if ($this->daemonize && !$options['reserve'] && $this->queue()->isQueued($queue)) {
             $this->error();
         }
 

@@ -59,7 +59,11 @@ class RedisQueue implements QueueInterface
             return;
         }
 
-        $this->getInstance()->rPush($this->key, $queue);
+        if (!isset($options['reserve']) || $options['reserve'] == false) {
+            $this->getInstance()->rPush($this->key, $queue);
+        } else {
+            $this->getInstance()->lPush($this->key, $queue);
+        }
     }
 
     public function next()

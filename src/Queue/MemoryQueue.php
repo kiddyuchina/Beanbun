@@ -92,7 +92,11 @@ class MemoryQueue implements QueueInterface
             return;
         }
 
-        $this->globalData->pushIfNotExist($this->key, $queue);
+        if (!isset($options['reserve']) || $options['reserve'] == false) {
+            $this->globalData->pushIfNotExist($this->key, $queue);
+        } else {
+            $this->globalData->pushToLeftIfNotExist($this->key, $queue);
+        }
     }
 
     public function next()
