@@ -39,7 +39,10 @@ class RedisQueue implements QueueInterface
     {
         if (!$this->redis) {
             $this->redis = new \Redis();
-            $this->redis->connect($this->config['host'], $this->config['port']);
+	    $this->redis->connect($this->config['host'], $this->config['port']);
+	    if(isset($this->config['auth'])) {
+                $this->redis->auth($this->config['auth']);
+            }
         }
         return $this->redis;
     }
