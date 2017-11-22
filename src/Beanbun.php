@@ -65,7 +65,6 @@ class Beanbun
     protected $downloaderFactory = null;
     protected $downloaderArgs = [];
     protected $logFactory = null;
-    protected $master_id = '';
 
     public static function timer($interval, $callback, $args = [], $persistent = true)
     {

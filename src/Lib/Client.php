@@ -256,11 +256,11 @@ class Client
     }
 
     /**
-     * PushToLeftIfNotExist.
+     * pushToLeftIfNotExist.
      * @param string $key
      * @throws \Exception
      */
-    public function PushToLeftIfNotExist($key, $value = false)
+    public function pushToLeftIfNotExist($key, $value = false)
     {
         if ($value === false) {
             return false;
@@ -268,7 +268,7 @@ class Client
 
         $connection = $this->getConnection($key);
         $this->writeToRemote(array(
-            'cmd' => 'PushToLeftIfNotExist',
+            'cmd' => 'pushToLeftIfNotExist',
             'key' => $key,
             'value' => $value,
         ), $connection);
