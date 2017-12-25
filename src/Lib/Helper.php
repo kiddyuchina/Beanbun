@@ -61,7 +61,7 @@ class Helper
         if (strlen($l3) == 0) {
             return $l1;
         }
-        $path = dirname($url_parsed['path']);
+        $path = dirname($url_parsed['path'].'a');
         if ($path[0] == '\\') {
             $path = '';
         }
