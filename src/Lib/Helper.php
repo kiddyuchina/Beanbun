@@ -79,7 +79,7 @@ class Helper
             while (substr($I1, 0, 3) == '../') {
                 $I1 = substr($I1, strlen($I1) - (strlen($I1) - 3), strlen($I1) - 3);
                 if (strlen($path) > 0) {
-                    $path = dirname($path);
+                    $path = dirname($path.'a');
                 }
             }
             return $I1 = $path == '/' ? $l3 . $path . $I1 : $l3 . $path . "/" . $I1;
