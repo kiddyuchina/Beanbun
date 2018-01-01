@@ -24,6 +24,8 @@ class Beanbun
     public $logFile = '';
     public $commands = [];
 
+    public $count = 1;
+
     public $queue = '';
     public $url = '';
     public $method = '';
