@@ -220,10 +220,10 @@ class Beanbun
     {
         global $argv;
         $this->commands = $argv;
-        $this->name = isset($config['name'])
-        ? $config['name']
-        : current(explode('.', $this->commands[0]));
-        $this->logFile = isset($config['logFile']) ? $config['logFile'] : __DIR__ . '/' . $this->name . '_access.log';
+        $this->name     = isset($config['name'])
+            ? $config['name']
+            : current(explode('.', $this->commands[0]));
+        $this->logFile  = isset($config['logFile']) ? $config['logFile'] : __DIR__ . '/' . $this->name . '_access.log';
         $this->setQueue();
         $this->setDownloader();
         $this->setLog();
@@ -233,14 +233,14 @@ class Beanbun
     {
         switch ($this->commands[1]) {
             case 'start':
-                foreach ((array) $this->seed as $url) {
+                foreach ((array)$this->seed as $url) {
                     if (is_string($url)) {
                         $this->queue()->add($url);
-                    } elseif (is_array($url)) {
+                    } else if (is_array($url)) {
                         $this->queue()->add($url[0], $url[1]);
                     }
                 }
-                $this->queues = null;
+                $this->queues = NULL;
                 echo "Beanbun is starting...\n";
                 fclose(STDOUT);
                 @$STDOUT = fopen($this->logFile, "a");
@@ -261,20 +261,20 @@ class Beanbun
     public function start()
     {
         if (!isset($this->commands[1])) {
-            $this->daemonize = false;
+            $this->daemonize = FALSE;
         }
 
         if ($this->daemonize) {
             $this->check();
 
-            $worker = new Worker;
-            $worker->count = $this->count;
-            $worker->name = $this->name;
+            $worker                = new Worker;
+            $worker->count         = $this->count;
+            $worker->name          = $this->name;
             $worker->onWorkerStart = [$this, 'onWorkerStart'];
-            $worker->onWorkerStop = [$this, 'onWorkerStop'];
-            $this->worker = $worker;
+            $worker->onWorkerStop  = [$this, 'onWorkerStop'];
+            $this->worker          = $worker;
 
-            Worker::$daemonize = true;
+            Worker::$daemonize  = TRUE;
             Worker::$stdoutFile = $this->logFile;
             Db::closeAll();
 
@@ -285,7 +285,7 @@ class Beanbun
             self::run();
         } else {
             $this->initHooks();
-            $this->seed = (array) $this->seed;
+            $this->seed = (array)$this->seed;
             while (count($this->seed)) {
                 $this->crawler();
             }
@@ -294,29 +294,29 @@ class Beanbun
 
     public function check()
     {
-        $error = false;
-        $text = '';
+        $error = FALSE;
+        $text  = '';
 //        $version_ok = $pcntl_loaded = $posix_loaded = true;
         if (!version_compare(phpversion(), "5.3.3", ">=")) {
-            $text .= "PHP Version >= 5.3.3                 \033[31;40m [fail] \033[0m\n";
-            $error = true;
+            $text  .= "PHP Version >= 5.3.3                 \033[31;40m [fail] \033[0m\n";
+            $error = TRUE;
         }
 
         if (!in_array("pcntl", get_loaded_extensions())) {
-            $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n";
-            $error = true;
+            $text  .= "Extension posix check                \033[31;40m [fail] \033[0m\n";
+            $error = TRUE;
         }
 
         if (!in_array("posix", get_loaded_extensions())) {
-            $text .= "Extension posix check                \033[31;40m [fail] \033[0m\n";
-            $error = true;
+            $text  .= "Extension posix check                \033[31;40m [fail] \033[0m\n";
+            $error = TRUE;
         }
 
-        $check_func_map = array(
+        $check_func_map = [
             "stream_socket_server",
             "stream_socket_client",
             "pcntl_signal_dispatch",
-        );
+        ];
 
         if ($disable_func_string = ini_get("disable_functions")) {
             $disable_func_map = array_flip(explode(",", $disable_func_string));
@@ -324,8 +324,8 @@ class Beanbun
 
         foreach ($check_func_map as $func) {
             if (isset($disable_func_map[$func])) {
-                $text .= "\033[31;40mFunction " . implode(', ', $check_func_map) . "may be disabled. Please check disable_functions in php.ini\033[0m\n";
-                $error = true;
+                $text  .= "\033[31;40mFunction " . implode(', ', $check_func_map) . "may be disabled. Please check disable_functions in php.ini\033[0m\n";
+                $error = TRUE;
                 break;
             }
         }
@@ -340,7 +340,7 @@ class Beanbun
     {
         $master_pid = is_file(Worker::$pidFile) ? file_get_contents(Worker::$pidFile) : 0;
         $master_pid && posix_kill($master_pid, SIGINT);
-        $timeout = 5;
+        $timeout    = 5;
         $start_time = time();
         while (1) {
             $master_is_alive = $master_pid && posix_kill($master_pid, 0);
@@ -369,7 +369,7 @@ class Beanbun
 
         $this->startWorkerHooks[] = function (Beanbun $beanbun) {
             $beanbun->queue()->maxQueueSize = $beanbun->max;
-            $beanbun->timer_id = Beanbun::timer($beanbun->interval, [$beanbun, 'crawler']);
+            $beanbun->timer_id              = Beanbun::timer($beanbun->interval, [$beanbun, 'crawler']);
         };
 
         $this->beforeDownloadPageHooks[] = [$this, 'defaultBeforeDownloadPage'];
@@ -390,7 +390,7 @@ class Beanbun
 
         if ($this->discoverUrl) {
             $this->discoverUrlHooks[] = $this->discoverUrl;
-        } elseif ($this->daemonize) {
+        } else if ($this->daemonize) {
             $this->discoverUrlHooks[] = [$this, 'defaultDiscoverUrl'];
         }
 
@@ -400,7 +400,7 @@ class Beanbun
 
         if ($this->daemonize) {
             $this->afterDiscoverHooks[] = function (Beanbun $beanbun) {
-                if ($beanbun->options['reserve'] == false) {
+                if ($beanbun->options['reserve'] == FALSE) {
                     $beanbun->queue()->queued($beanbun->queue);
                 }
             };
@@ -432,21 +432,22 @@ class Beanbun
      */
     public function queue()
     {
-        if ($this->queues == null) {
+        if ($this->queues == NULL) {
             $this->queues = call_user_func($this->queueFactory, $this->queueArgs);
         }
         return $this->queues;
     }
 
-    public function setQueue($callback = null, $args = [
+    public function setQueue($callback = NULL, $args = [
         'host' => '127.0.0.1',
         'port' => '2207',
-    ]) {
-        if ($callback === 'memory' || $callback === null) {
+    ])
+    {
+        if ($callback === 'memory' || $callback === NULL) {
             $this->queueFactory = function ($args) {
                 return new MemoryQueue($args);
             };
-        } elseif ($callback == 'redis') {
+        } else if ($callback == 'redis') {
             $this->queueFactory = function ($args) {
                 return new RedisQueue($args);
             };
@@ -462,15 +463,15 @@ class Beanbun
      */
     public function downloader()
     {
-        if ($this->downloader === null) {
+        if ($this->downloader === NULL) {
             $this->downloader = call_user_func($this->downloaderFactory, $this->downloaderArgs);
         }
         return $this->downloader;
     }
 
-    public function setDownloader($callback = null, $args = [])
+    public function setDownloader($callback = NULL, $args = [])
     {
-        if ($callback === null) {
+        if ($callback === NULL) {
             $this->downloaderFactory = function ($args) {
                 return new Client($args);
             };
@@ -485,13 +486,13 @@ class Beanbun
         call_user_func($this->logFactory, $msg, $this);
     }
 
-    public function setLog($callback = null)
+    public function setLog($callback = NULL)
     {
-        $this->logFactory = $callback === null
-        ? function ($msg, $beanbun) {
-            echo date('Y-m-d H:i:s') . " {$beanbun->name} : $msg\n";
-        }
-        : $callback;
+        $this->logFactory = $callback === NULL
+            ? function ($msg, $beanbun) {
+                echo date('Y-m-d H:i:s') . " {$beanbun->name} : $msg\n";
+            }
+            : $callback;
     }
 
     /**
@@ -499,7 +500,7 @@ class Beanbun
      *
      * @throws BeanbunException
      */
-    public function error($msg = null)
+    public function error($msg = NULL)
     {
         throw new BeanbunException($msg);
     }
@@ -520,10 +521,10 @@ class Beanbun
             call_user_func($this->exceptionHandler, $e);
         }
 
-        $this->queue = '';
-        $this->url = '';
-        $this->method = '';
-        $this->page = '';
+        $this->queue   = '';
+        $this->url     = '';
+        $this->method  = '';
+        $this->page    = '';
         $this->options = [];
     }
 
@@ -543,7 +544,7 @@ class Beanbun
             if ($e->getMessage()) {
                 $this->log($e->getMessage());
             }
-        } elseif ($e instanceof Exception) {
+        } else if ($e instanceof Exception) {
             $this->log($e->getMessage());
             if ($this->daemonize) {
                 $this->queue()->add($this->queue['url'], $this->queue['options']);
@@ -577,25 +578,25 @@ class Beanbun
 
         if (!is_array($queue)) {
             $this->queue = $queue = [
-                'url' => $queue,
+                'url'     => $queue,
                 'options' => [],
             ];
-        } else{
+        } else {
             $this->queue = $queue;
         }
 
         $options = array_merge([
             'headers' => $this->options['headers'] ?: [],
-            'reserve' => false,
+            'reserve' => FALSE,
             'timeout' => $this->timeout,
-        ], (array) $queue['options']);
+        ], (array)$queue['options']);
 
         if ($this->daemonize && !$options['reserve'] && $this->queue()->isQueued($queue)) {
             $this->error();
         }
 
-        $this->url = $queue['url'];
-        $this->method = isset($options['method']) ? $options['method'] : 'GET';
+        $this->url     = $queue['url'];
+        $this->method  = isset($options['method']) ? $options['method'] : 'GET';
         $this->options = $options;
         if (!isset($this->options['headers']['User-Agent'])) {
             $this->options['headers']['User-Agent'] = Helper::randUserAgent($this->userAgent);
@@ -608,7 +609,7 @@ class Beanbun
      */
     public function defaultDownloadPage()
     {
-        $response = $this->downloader()->request($this->method, $this->url, $this->options);
+        $response   = $this->downloader()->request($this->method, $this->url, $this->options);
         $this->page = $response->getBody();
         if ($this->page) {
             $worker_id = isset($this->id) ? $this->worker->id : '';
