@@ -424,10 +424,12 @@ class Beanbun
                 'url' => $queue,
                 'options' => [],
             ];
+        } else{
+            $this->queue = $queue;
         }
 
         $options = array_merge([
-            'headers' => [],
+            'headers' => $this->options['headers'],
             'reserve' => false,
             'timeout' => $this->timeout,
         ], (array) $queue['options']);
