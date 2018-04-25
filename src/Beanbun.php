@@ -429,7 +429,7 @@ class Beanbun
         }
 
         $options = array_merge([
-            'headers' => $this->options['headers'],
+            'headers' => $this->options['headers'] ?: [],
             'reserve' => false,
             'timeout' => $this->timeout,
         ], (array) $queue['options']);
