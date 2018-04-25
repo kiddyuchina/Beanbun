@@ -1,42 +1,159 @@
 <?php
+
 namespace Beanbun;
 
 use Beanbun\Exception\BeanbunException;
+use Beanbun\Lib\Db;
 use Beanbun\Lib\Helper;
+use Beanbun\Queue\MemoryQueue;
+use Beanbun\Queue\RedisQueue;
 use Exception;
 use GuzzleHttp\Client;
 use Workerman\Lib\Timer;
 use Workerman\Worker;
 
+/**
+ * Class Beanbun
+ *
+ * @package Beanbun
+ */
 class Beanbun
 {
     const VERSION = '1.0.4';
 
-    public $id = null;
-    public $name = null;
+    public $id = NULL;
+    public $name = NULL;
+
+    /**
+     * @var int 最大抓取网页数量，为 0 时不限制抓取数量。
+     */
     public $max = 0;
+
+    /**
+     * @var int (守护进程模式)爬虫进程数，默认为 5。
+     */
+    public $count = 5;
+
+    /**
+     * @var array
+     */
     public $seed = [];
-    public $daemonize = true;
+
+    /**
+     * @var bool 是否守护进程方式运行
+     */
+    public $daemonize = TRUE;
+
+    /**
+     * @var array 采集地址入列规则
+     */
     public $urlFilter = [];
+
+    /**
+     * @var int 每个爬虫进程抓取网页的间隔时间，默认为1，最低为0.01
+     */
     public $interval = 5;
+
+    /**
+     * @var int 爬虫全局下载单个网页超时时间，秒
+     */
     public $timeout = 5;
+
+    /**
+     * @var string [pc, ios, android, mobile]
+     */
     public $userAgent = 'pc';
+
+    /**
+     * @var mixed|string 当前爬虫日志文件路径，仅守护进程模式下有效
+     */
     public $logFile = '';
     public $commands = [];
 
+    /**
+     * 返回当前爬取网页的队列信息，array 类型
+     *
+     * @var array {url, options}
+     */
     public $queue = '';
+
+    /**
+     * @var string url信息
+     */
     public $url = '';
+
+    /**
+     * @var string 请求方法
+     */
     public $method = '';
+
+    /**
+     * @var array 附加信息
+     */
     public $options = [];
+
+    /**
+     * @var string 下载网页的网页内容
+     */
     public $page = '';
 
+    /**
+     * 爬虫进程启动时执行。
+     * 多进程时，每个进程都会执行一次，
+     * 如果一个爬虫只想执行一次，可用 id 判断
+     *
+     * @var \Closure
+     */
     public $startWorker = '';
+
+    /**
+     * 在每次爬取网页前时执行此回调。
+     *
+     * @var \Closure
+     */
     public $beforeDownloadPage = '';
+
+    /**
+     * 执行爬取，并把网页内容写入 page 属性。
+     * 默认使用 Guzzle 进行网页爬取，如需替换爬取过程，则使用此回调。
+     *
+     * @var \Closure
+     */
     public $downloadPage = '';
+
+    /**
+     * 爬取网页后执行此回调。
+     *
+     * @var \Closure
+     */
     public $afterDownloadPage = '';
+
+    /**
+     * 爬取网页完毕后，把 page 内容中的链接加入队列。
+     * 默认把发现的新 url 根据 urlFilter 进行过滤。
+     * 如需替换发现新链接的方法，则使用此回调。
+     *
+     * @var \Closure
+     */
     public $discoverUrl = '';
+
+    /**
+     * 发现新的 url 加入队列后，执行此回调
+     *
+     * @var \Closure
+     */
     public $afterDiscover = '';
+
+    /**
+     * 在每个爬虫进程正常关闭时执行。
+     *
+     * @var \Closure
+     */
     public $stopWorker = '';
+
+    /**
+     * @var string
+     */
     public $exceptionHandler = '';
 
     public $hooks = [
@@ -56,21 +173,34 @@ class Beanbun
     public $afterDiscoverHooks = [];
     public $stopWorkerHooks = [];
 
-    protected $queues = null;
-    protected $downloader = null;
-    protected $worker = null;
-    protected $timer_id = null;
-    protected $queueFactory = null;
+    protected $queues = NULL;
+    /** @var Client|mixed 下载器 */
+    protected $downloader = NULL;
+    /** @var Worker 任务进程 */
+    protected $worker = NULL;
+    protected $timer_id = NULL;
+    protected $queueFactory = NULL;
     protected $queueArgs = [];
-    protected $downloaderFactory = null;
+    protected $downloaderFactory = NULL;
     protected $downloaderArgs = [];
-    protected $logFactory = null;
+    protected $logFactory = NULL;
 
-    public static function timer($interval, $callback, $args = [], $persistent = true)
+    /**
+     * @param       $interval
+     * @param       $callback
+     * @param array $args
+     * @param bool  $persistent
+     *
+     * @return int
+     */
+    public static function timer($interval, $callback, $args = [], $persistent = TRUE)
     {
         return Timer::add($interval, $callback, $args, $persistent);
     }
 
+    /**
+     * @param $time_id
+     */
     public static function timerDel($time_id)
     {
         Timer::del($time_id);
@@ -81,6 +211,11 @@ class Beanbun
         @Worker::runAll();
     }
 
+    /**
+     * Beanbun constructor.
+     *
+     * @param array $config
+     */
     public function __construct($config = [])
     {
         global $argv;
@@ -108,7 +243,7 @@ class Beanbun
                 $this->queues = null;
                 echo "Beanbun is starting...\n";
                 fclose(STDOUT);
-                $STDOUT = fopen($this->logFile, "a");
+                @$STDOUT = fopen($this->logFile, "a");
                 break;
             case 'clean':
                 $this->queue()->clean();
@@ -141,7 +276,7 @@ class Beanbun
 
             Worker::$daemonize = true;
             Worker::$stdoutFile = $this->logFile;
-            \Beanbun\Lib\Db::closeAll();
+            Db::closeAll();
 
             $this->queueArgs['name'] = $this->name;
             $this->initHooks();
@@ -161,7 +296,7 @@ class Beanbun
     {
         $error = false;
         $text = '';
-        $version_ok = $pcntl_loaded = $posix_loaded = true;
+//        $version_ok = $pcntl_loaded = $posix_loaded = true;
         if (!version_compare(phpversion(), "5.3.3", ">=")) {
             $text .= "PHP Version >= 5.3.3                 \033[31;40m [fail] \033[0m\n";
             $error = true;
@@ -223,7 +358,7 @@ class Beanbun
 
     public function initHooks()
     {
-        $this->startWorkerHooks[] = function ($beanbun) {
+        $this->startWorkerHooks[] = function (Beanbun $beanbun) {
             $beanbun->id = $beanbun->worker->id;
             $beanbun->log("Beanbun worker {$beanbun->id} is starting ...");
         };
@@ -232,7 +367,7 @@ class Beanbun
             $this->startWorkerHooks[] = $this->startWorker;
         }
 
-        $this->startWorkerHooks[] = function ($beanbun) {
+        $this->startWorkerHooks[] = function (Beanbun $beanbun) {
             $beanbun->queue()->maxQueueSize = $beanbun->max;
             $beanbun->timer_id = Beanbun::timer($beanbun->interval, [$beanbun, 'crawler']);
         };
@@ -264,7 +399,7 @@ class Beanbun
         }
 
         if ($this->daemonize) {
-            $this->afterDiscoverHooks[] = function ($beanbun) {
+            $this->afterDiscoverHooks[] = function (Beanbun $beanbun) {
                 if ($beanbun->options['reserve'] == false) {
                     $beanbun->queue()->queued($beanbun->queue);
                 }
@@ -280,14 +415,21 @@ class Beanbun
         }
     }
 
-    // 爬虫进程
-    public function onWorkerStart($worker)
+    /**
+     * @param Worker $worker
+     */
+    public function onWorkerStart(Worker $worker)
     {
         foreach ($this->startWorkerHooks as $hook) {
-            call_user_func($hook, $this);
+            call_user_func($hook, $this, $worker);
         }
     }
 
+    /**
+     * 获取队列实例
+     *
+     * @return MemoryQueue|RedisQueue
+     */
     public function queue()
     {
         if ($this->queues == null) {
@@ -302,11 +444,11 @@ class Beanbun
     ]) {
         if ($callback === 'memory' || $callback === null) {
             $this->queueFactory = function ($args) {
-                return new \Beanbun\Queue\MemoryQueue($args);
+                return new MemoryQueue($args);
             };
         } elseif ($callback == 'redis') {
             $this->queueFactory = function ($args) {
-                return new \Beanbun\Queue\RedisQueue($args);
+                return new RedisQueue($args);
             };
         } else {
             $this->queueFactory = $callback;
@@ -315,6 +457,9 @@ class Beanbun
         $this->queueArgs = $args;
     }
 
+    /**
+     * @return Client
+     */
     public function downloader()
     {
         if ($this->downloader === null) {
@@ -349,6 +494,11 @@ class Beanbun
         : $callback;
     }
 
+    /**
+     * @param mixed $msg
+     *
+     * @throws BeanbunException
+     */
     public function error($msg = null)
     {
         throw new BeanbunException($msg);
@@ -377,10 +527,13 @@ class Beanbun
         $this->options = [];
     }
 
-    public function onWorkerStop($worker)
+    /**
+     * @param Worker $worker
+     */
+    public function onWorkerStop(Worker $worker)
     {
         foreach ($this->stopWorkerHooks as $hook) {
-            call_user_func($hook, $this);
+            call_user_func($hook, $this, $worker);
         }
     }
 
@@ -400,6 +553,9 @@ class Beanbun
         }
     }
 
+    /**
+     * @throws BeanbunException
+     */
     public function defaultBeforeDownloadPage()
     {
         if ($this->daemonize) {
@@ -446,6 +602,10 @@ class Beanbun
         }
     }
 
+    /**
+     * @throws BeanbunException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function defaultDownloadPage()
     {
         $response = $this->downloader()->request($this->method, $this->url, $this->options);
@@ -458,6 +618,9 @@ class Beanbun
         }
     }
 
+    /**
+     * @throws BeanbunException
+     */
     public function defaultDiscoverUrl()
     {
         $countUrlFilter = count($this->urlFilter);
@@ -482,6 +645,10 @@ class Beanbun
         }
     }
 
+    /**
+     * @param        $middleware
+     * @param string $action
+     */
     public function middleware($middleware, $action = 'handle')
     {
         if (is_object($middleware)) {
