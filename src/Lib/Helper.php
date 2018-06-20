@@ -44,51 +44,61 @@ class Helper
         return array_flip(array_flip(array_filter($hrefs)));
     }
 
-    public static function formatUrl($l1, $l2)
+    public static function formatUrl($href, $origin)
     {
-        if (strlen($l1) > 0) {
-            $I1 = str_replace([chr(34), chr(39)], '', $l1);
+        if (strlen($href) > 0) {
+            $transHref = str_replace([chr(34), chr(39)], '', $href);
         } else {
-            return $l1;
+            return $href;
         }
-        $url_parsed = parse_url($l2);
-        $scheme = $url_parsed['scheme'];
+
+        $urlParsed = parse_url($origin);
+        $scheme = $urlParsed['scheme'];
         if ($scheme != '') {
             $scheme .= '://';
         }
-        $host = $url_parsed['host'];
-        $l3 = $scheme . $host;
-        if (strlen($l3) == 0) {
-            return $l1;
+
+        $host = $scheme . $urlParsed['host'];
+        if (strlen($host) == 0) {
+            return $href;
         }
-        $path = dirname($url_parsed['path']);
+
+        $path = dirname($urlParsed['path']);
         if ($path[0] == '\\') {
             $path = '';
         }
-        $pos = strpos($I1, '#');
+
+        $pos = strpos($transHref, '#');
         if ($pos > 0) {
-            $I1 = substr($I1, 0, $pos);
+            $transHref = substr($transHref, 0, $pos);
         }
+
         //判断类型
-        if (preg_match("/^(http|https|ftp):(\/\/|\\\\)(([\w\/\\\+\-~`@:%])+\.)+([\w\/\\\.\=\?\+\-~`@\':!%#]|(&)|&)+/i", $I1)) {
-            return $I1;
-        } elseif ($I1[0] == '/') {
-            return $I1 = $l3 . $I1;
-        } elseif (substr($I1, 0, 3) == '../') {
+        if (preg_match("/^(http|https|ftp):(\/\/|\\\\)(([\w\/\\\+\-~`@:%])+\.)+([\w\/\\\.\=\?\+\-~`@\':!%#]|(&)|&)+/i", $transHref)) {
+            return $transHref;
+        }
+        elseif (substr($transHref, 0, 2) == '//') {
+            return ($scheme . ltrim($transHref, '/'));
+        }
+        elseif ($transHref[0] == '/') {
+            return ($scheme . $host . $transHref);
+        }
+        elseif (substr($transHref, 0, 3) == '../') {
             //相对路径
-            while (substr($I1, 0, 3) == '../') {
-                $I1 = substr($I1, strlen($I1) - (strlen($I1) - 3), strlen($I1) - 3);
+            while (substr($transHref, 0, 3) == '../') {
+                $transHref = substr($transHref, strlen($transHref) - (strlen($transHref) - 3), strlen($transHref) - 3);
                 if (strlen($path) > 0) {
                     $path = dirname($path);
                 }
             }
-            return $I1 = $path == '/' ? $l3 . $path . $I1 : $l3 . $path . "/" . $I1;
-        } elseif (substr($I1, 0, 2) == './') {
-            return $I1 = $l3 . $path . substr($I1, strlen($I1) - (strlen($I1) - 1), strlen($I1) - 1);
-        } elseif (strtolower(substr($I1, 0, 7)) == 'mailto:' || strtolower(substr($I1, 0, 11)) == 'javascript:') {
+            return ($path == '/' ? $host . $path . $transHref : $host . $path . "/" . $transHref);
+        }
+        elseif (substr($transHref, 0, 2) == './') {
+            return ($host . $path . substr($transHref, strlen($transHref) - (strlen($transHref) - 1), strlen($transHref) - 1));
+        } elseif (strtolower(substr($transHref, 0, 7)) == 'mailto:' || strtolower(substr($transHref, 0, 11)) == 'javascript:') {
             return false;
         } else {
-            return $I1 = $l3 . $path . '/' . $I1;
+            return ($host . $path . '/' . $transHref);
         }
     }
 
