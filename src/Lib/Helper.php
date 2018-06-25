@@ -81,7 +81,7 @@ class Helper
             return ($scheme . ltrim($transHref, '/'));
         }
         elseif ($transHref[0] == '/') {
-            return ($scheme . $host . $transHref);
+            return ($host . $transHref);
         }
         elseif (substr($transHref, 0, 3) == '../') {
             //相对路径
@@ -96,7 +96,7 @@ class Helper
         elseif (substr($transHref, 0, 2) == './') {
             return ($host . $path . substr($transHref, strlen($transHref) - (strlen($transHref) - 1), strlen($transHref) - 1));
         } elseif (strtolower(substr($transHref, 0, 7)) == 'mailto:' || strtolower(substr($transHref, 0, 11)) == 'javascript:') {
-            return false;
+            return '';
         } else {
             return ($host . $path . '/' . $transHref);
         }
