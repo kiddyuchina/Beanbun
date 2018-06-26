@@ -16,6 +16,7 @@ class HelperTest extends TestCase
 
     public function setUp()/* The :void return type declaration that should be here would cause a BC issue */
     {
+        $this->helper = new \Beanbun\Lib\Helper();
     }
 
     public function tearDown()/* The :void return type declaration that should be here would cause a BC issue */
@@ -28,8 +29,6 @@ class HelperTest extends TestCase
      */
     public function testRelativeLink()
     {
-        $this->helper = new \Beanbun\Lib\Helper();
-
         // case
 //        $val_1 = $this->helper->formatUrl('abs/cde/efg.html', 'https://www.beanbun.org');
 //        $this->assertEquals($val_1, 'https://www.beanbun.org/abs/cde/efg.html');
@@ -60,6 +59,14 @@ class HelperTest extends TestCase
         // case
         $val_1 = $this->helper->formatUrl('../abs/ced/efg.html', 'https://www.beanbun.org/');
         $this->assertEquals($val_1, 'https://www.beanbun.org/ced/efg.html');
+
+        // case
+        $val_1 = $this->helper->formatUrl('../../abs/ced/efg.html', 'https://www.beanbun.org/');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/ced/efg.html');
+
+        // case
+        $val_1 = $this->helper->formatUrl('../../abs/ced/../efg.html', 'https://www.beanbun.org/');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/ced/efg.html');
     }
 
     /**
@@ -67,11 +74,9 @@ class HelperTest extends TestCase
      */
     public function testAbsoluteLink()
     {
-        $this->helper = new \Beanbun\Lib\Helper();
-
         // case
         $val_1 = $this->helper->formatUrl('/efg.html', 'https://www.beanbun.org/');
-        $this->assertEquals($val_1, 'https://www.beanbun.org/abs/cde/efg.html');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/efg.html');
 
         // case
         $val_1 = $this->helper->formatUrl('/abs/cde/efg.html', 'https://www.beanbun.org/');
@@ -83,6 +88,10 @@ class HelperTest extends TestCase
 
         // case
         $val_1 = $this->helper->formatUrl('//cde/efg.html', 'https://www.beanbun.org/');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/cde/efg.html');
+
+        // case
+        $val_1 = $this->helper->formatUrl('//cde/../efg.html', 'https://www.beanbun.org/');
         $this->assertEquals($val_1, 'https://www.beanbun.org/cde/efg.html');
     }
 

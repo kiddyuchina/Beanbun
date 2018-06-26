@@ -64,7 +64,7 @@ class Helper
         if (strlen($host) == 0) {
             return $href;
         }
-        $host = $scheme . $host;
+        $host = $scheme . $host . '/';
 
         $path = isset($urlParsed['path']) ? $urlParsed['path'] : '';
         if ($path[0] == '\\' || $path == '/') {
@@ -83,19 +83,33 @@ class Helper
             return $transHref;
         }
         // 绝对路径
-        elseif ($splitTransHref[0] == '' || $splitTransHref[1] == '') {
-            return ($scheme . ltrim($transHref, '/'));
+        elseif ($splitTransHref[0] == '') {
+            return ($host . ltrim($transHref, '/'));
         }
         // 相对路径
         elseif ($splitTransHref[0] == '.') {
-            return ($host . '/' . substr($transHref, 2));
+            return ($host . substr($transHref, 2));
         }
         // 相对路径
         else {
-
+            // todo: 移动至上方，处理相对路径后再判断href
             $splitPath = explode('/', $path);
-            
             $splitTransHref = array_merge($splitPath, $splitTransHref);
+            $splitBox = [];
+
+            foreach ($splitTransHref as $key => $value) {
+                if (empty($value)) {
+                    continue;
+                }
+
+                if ($value == '..') {
+                    array_shift($splitBox);
+                } else {
+                    array_push($splitBox, $value);
+                }
+            }
+
+            return $host . implode($splitBox, '/');
         }
     }
 
