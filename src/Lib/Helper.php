@@ -38,9 +38,10 @@ class Helper
         preg_match_all($pattern, $html, $match);
         $match = array_merge($match[2], $match[3]);
         $hrefs = array_flip(array_flip(array_filter($match)));
-        foreach ($hrefs as $key => $href) {
-            $hrefs[$key] = self::formatUrl($href, $url);
+        foreach ($hrefs as &$href) {
+            $href = self::formatUrl($href, $url);
         }
+
         return array_flip(array_flip(array_filter($hrefs)));
     }
 
@@ -53,18 +54,20 @@ class Helper
         }
 
         $urlParsed = parse_url($origin);
-        $scheme = $urlParsed['scheme'];
+
+        $scheme = isset($urlParsed['scheme']) ? $urlParsed['scheme'] : '';
         if ($scheme != '') {
             $scheme .= '://';
         }
 
-        $host = $scheme . $urlParsed['host'];
+        $host = isset($urlParsed['host']) ? $urlParsed['host'] : '';
         if (strlen($host) == 0) {
             return $href;
         }
+        $host = $scheme . $host;
 
-        $path = dirname($urlParsed['path']);
-        if ($path[0] == '\\') {
+        $path = isset($urlParsed['path']) ? $urlParsed['path'] : '';
+        if ($path[0] == '\\' || $path == '/') {
             $path = '';
         }
 
@@ -73,32 +76,26 @@ class Helper
             $transHref = substr($transHref, 0, $pos);
         }
 
-        //判断类型
-        if (preg_match("/^(http|https|ftp):(\/\/|\\\\)(([\w\/\\\+\-~`@:%])+\.)+([\w\/\\\.\=\?\+\-~`@\':!%#]|(&)|&)+/i", $transHref)) {
+        $splitTransHref = explode('/', $transHref);
+
+        // 完整路径
+        if ($splitTransHref[0] == 'http' || $splitTransHref[0] == 'https' || $splitTransHref[0] == 'ftp') {
             return $transHref;
         }
-        elseif (substr($transHref, 0, 2) == '//') {
+        // 绝对路径
+        elseif ($splitTransHref[0] == '' || $splitTransHref[1] == '') {
             return ($scheme . ltrim($transHref, '/'));
         }
-        elseif ($transHref[0] == '/') {
-            return ($host . $transHref);
+        // 相对路径
+        elseif ($splitTransHref[0] == '.') {
+            return ($host . '/' . substr($transHref, 2));
         }
-        elseif (substr($transHref, 0, 3) == '../') {
-            //相对路径
-            while (substr($transHref, 0, 3) == '../') {
-                $transHref = substr($transHref, strlen($transHref) - (strlen($transHref) - 3), strlen($transHref) - 3);
-                if (strlen($path) > 0) {
-                    $path = dirname($path);
-                }
-            }
-            return ($path == '/' ? $host . $path . $transHref : $host . $path . "/" . $transHref);
-        }
-        elseif (substr($transHref, 0, 2) == './') {
-            return ($host . $path . substr($transHref, strlen($transHref) - (strlen($transHref) - 1), strlen($transHref) - 1));
-        } elseif (strtolower(substr($transHref, 0, 7)) == 'mailto:' || strtolower(substr($transHref, 0, 11)) == 'javascript:') {
-            return '';
-        } else {
-            return ($host . $path . '/' . $transHref);
+        // 相对路径
+        else {
+
+            $splitPath = explode('/', $path);
+            
+            $splitTransHref = array_merge($splitPath, $splitTransHref);
         }
     }
 
