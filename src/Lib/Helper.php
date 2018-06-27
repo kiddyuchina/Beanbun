@@ -80,8 +80,11 @@ class Helper
         } else {
             $path = isset($originParsed['path']) ? $originParsed['path'] : '';
 
+            if (isset($hrefParsed['fragment'])) {
+                $path = $hrefParsed['fragment'];
+            }
             // 绝对路径
-            if ($href[0] == '/') {
+            elseif ($href[0] == '/') {
                 $path = $href;
             } else {
                 $path = $path . '/' . $href;
