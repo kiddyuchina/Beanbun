@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
  * Helper类方法测试用例
  * @package Beanbun\Tests
  */
-class HelperTest extends TestCase
+class FormatUrlTest extends TestCase
 {
     /**
      * @var \Beanbun\Lib\Helper;
@@ -25,13 +25,31 @@ class HelperTest extends TestCase
     }
 
     /**
+     * 完整路径测试
+     */
+    public function testFullLink()
+    {
+        // case
+        $val = $this->helper->formatUrl('http://www.beanbun.org/', 'https://www.baidu.com/');
+        $this->assertEquals($val, 'http://www.beanbun.org/');
+
+        // case
+        $val = $this->helper->formatUrl('https://www.beanbun.org/', 'http://baidu.com/');
+        $this->assertEquals($val, 'https://www.beanbun.org/');
+
+        // case
+        $val = $this->helper->formatUrl('htps://www.beanbun.org/', 'http://baidu.com/');
+        $this->assertEquals($val, 'htps://www.beanbun.org/');
+    }
+
+    /**
      * 相对路径测试
      */
     public function testRelativeLink()
     {
         // case
-//        $val_1 = $this->helper->formatUrl('abs/cde/efg.html', 'https://www.beanbun.org');
-//        $this->assertEquals($val_1, 'https://www.beanbun.org/abs/cde/efg.html');
+        $val_1 = $this->helper->formatUrl('abs/cde/efg.html', 'https://www.beanbun.org');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/abs/cde/efg.html');
         // case
         $val_1 = $this->helper->formatUrl('abs/cde/efg.html', 'https://www.beanbun.org/');
         $this->assertEquals($val_1, 'https://www.beanbun.org/abs/cde/efg.html');
@@ -46,7 +64,7 @@ class HelperTest extends TestCase
 
         // case
         $val_1 = $this->helper->formatUrl('./ced/efg.html', 'https://www.beanbun.org/');
-        $this->assertEquals($val_1, 'https://www.beanbun.org/efg.html');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/ced/efg.html');
 
         // case
         $val_1 = $this->helper->formatUrl('../efg.html', 'https://www.beanbun.org/');
@@ -54,19 +72,19 @@ class HelperTest extends TestCase
 
         // case
         $val_1 = $this->helper->formatUrl('../ced/efg.html', 'https://www.beanbun.org/');
-        $this->assertEquals($val_1, 'https://www.beanbun.org/efg.html');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/ced/efg.html');
 
         // case
         $val_1 = $this->helper->formatUrl('../abs/ced/efg.html', 'https://www.beanbun.org/');
-        $this->assertEquals($val_1, 'https://www.beanbun.org/ced/efg.html');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/abs/ced/efg.html');
 
         // case
         $val_1 = $this->helper->formatUrl('../../abs/ced/efg.html', 'https://www.beanbun.org/');
-        $this->assertEquals($val_1, 'https://www.beanbun.org/ced/efg.html');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/abs/ced/efg.html');
 
         // case
         $val_1 = $this->helper->formatUrl('../../abs/ced/../efg.html', 'https://www.beanbun.org/');
-        $this->assertEquals($val_1, 'https://www.beanbun.org/ced/efg.html');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/abs/efg.html');
     }
 
     /**
@@ -83,6 +101,10 @@ class HelperTest extends TestCase
         $this->assertEquals($val_1, 'https://www.beanbun.org/abs/cde/efg.html');
 
         // case
+        $val_1 = $this->helper->formatUrl('/abs/cde/../../efg.html', 'https://www.beanbun.org/');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/efg.html');
+
+        // case
         $val_1 = $this->helper->formatUrl('//efg.html', 'https://www.beanbun.org/');
         $this->assertEquals($val_1, 'https://www.beanbun.org/efg.html');
 
@@ -92,7 +114,11 @@ class HelperTest extends TestCase
 
         // case
         $val_1 = $this->helper->formatUrl('//cde/../efg.html', 'https://www.beanbun.org/');
-        $this->assertEquals($val_1, 'https://www.beanbun.org/cde/efg.html');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/efg.html');
+
+        // case
+        $val_1 = $this->helper->formatUrl('//abs/cde/../efg.html', 'https://www.beanbun.org/');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/abs/efg.html');
     }
 
     /**
@@ -102,6 +128,6 @@ class HelperTest extends TestCase
     {
         // case
         $val_1 = $this->helper->formatUrl('javascript:void(0);', 'https://www.beanbun.org/');
-        $this->assertEquals($val_1, false);
+        $this->assertEquals($val_1, 'javascript:void(0);');
     }
 }

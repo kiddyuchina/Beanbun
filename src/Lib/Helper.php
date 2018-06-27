@@ -45,65 +45,60 @@ class Helper
         return array_flip(array_flip(array_filter($hrefs)));
     }
 
+    /**
+     * 将抓取的链接格式化
+     *
+     * @param string $href
+     * @param string $origin
+     * @return string
+     */
     public static function formatUrl($href, $origin)
     {
-        if (strlen($href) > 0) {
-            $transHref = str_replace([chr(34), chr(39)], '', $href);
-        } else {
+        $href = str_replace([chr(34), chr(39)], '', $href);
+        if (empty($href)) {
             return $href;
         }
 
-        $urlParsed = parse_url($origin);
+        $originParsed = parse_url($origin);
 
-        $scheme = isset($urlParsed['scheme']) ? $urlParsed['scheme'] : '';
+        $scheme = isset($originParsed['scheme']) ? $originParsed['scheme'] : '';
         if ($scheme != '') {
             $scheme .= '://';
         }
 
-        $host = isset($urlParsed['host']) ? $urlParsed['host'] : '';
+        $host = isset($originParsed['host']) ? $originParsed['host'] : '';
         if (strlen($host) == 0) {
             return $href;
         }
         $host = $scheme . $host . '/';
 
-        $path = isset($urlParsed['path']) ? $urlParsed['path'] : '';
-        if ($path[0] == '\\' || $path == '/') {
-            $path = '';
-        }
 
-        $pos = strpos($transHref, '#');
-        if ($pos > 0) {
-            $transHref = substr($transHref, 0, $pos);
-        }
+        $hrefParsed = parse_url($href);
 
-        $splitTransHref = explode('/', $transHref);
+        if (isset($hrefParsed['scheme'])) {
+            return $href;
+        } else {
+            $path = isset($originParsed['path']) ? $originParsed['path'] : '';
 
-        // 完整路径
-        if ($splitTransHref[0] == 'http' || $splitTransHref[0] == 'https' || $splitTransHref[0] == 'ftp') {
-            return $transHref;
-        }
-        // 绝对路径
-        elseif ($splitTransHref[0] == '') {
-            return ($host . ltrim($transHref, '/'));
-        }
-        // 相对路径
-        elseif ($splitTransHref[0] == '.') {
-            return ($host . substr($transHref, 2));
-        }
-        // 相对路径
-        else {
-            // todo: 移动至上方，处理相对路径后再判断href
+            // 绝对路径
+            if ($href[0] == '/') {
+                $path = $href;
+            } else {
+                $path = $path . '/' . $href;
+            }
+
             $splitPath = explode('/', $path);
-            $splitTransHref = array_merge($splitPath, $splitTransHref);
             $splitBox = [];
-
-            foreach ($splitTransHref as $key => $value) {
+            
+            foreach($splitPath as $key => $value) {
                 if (empty($value)) {
                     continue;
                 }
 
-                if ($value == '..') {
-                    array_shift($splitBox);
+                if ($value == '.') {
+                    continue;
+                } elseif ($value == '..') {
+                    array_pop($splitBox);
                 } else {
                     array_push($splitBox, $value);
                 }
