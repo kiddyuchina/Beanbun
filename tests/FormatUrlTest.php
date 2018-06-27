@@ -50,9 +50,14 @@ class FormatUrlTest extends TestCase
         // case
         $val_1 = $this->helper->formatUrl('abs/cde/efg.html', 'https://www.beanbun.org');
         $this->assertEquals($val_1, 'https://www.beanbun.org/abs/cde/efg.html');
+
         // case
         $val_1 = $this->helper->formatUrl('abs/cde/efg.html', 'https://www.beanbun.org/');
         $this->assertEquals($val_1, 'https://www.beanbun.org/abs/cde/efg.html');
+
+        // case
+        $val_1 = $this->helper->formatUrl('abs/cde/efg.html', 'https://www.beanbun.org/ok');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/ok/abs/cde/efg.html');
 
         // case
         $val_1 = $this->helper->formatUrl('efg.html', 'https://www.beanbun.org/');
@@ -119,6 +124,27 @@ class FormatUrlTest extends TestCase
         // case
         $val_1 = $this->helper->formatUrl('//abs/cde/../efg.html', 'https://www.beanbun.org/');
         $this->assertEquals($val_1, 'https://www.beanbun.org/abs/efg.html');
+    }
+
+    /**
+     * 路由参数测试
+     */
+    public function testRouteParams()
+    {
+        $val = $this->helper->formatUrl('/efg.html#user/a', 'http://www.beanbun.org/');
+        $this->assertEquals($val, 'http://www.beanbun.org/efg.html#user/a');
+
+        $val = $this->helper->formatUrl('/efg.html#user/../a', 'http://www.beanbun.org/');
+        $this->assertEquals($val, 'http://www.beanbun.org/efg.html#user/../a');
+
+        $val = $this->helper->formatUrl('./abs/efg.html#user/../a', 'http://www.beanbun.org/');
+        $this->assertEquals($val, 'http://www.beanbun.org/abs/efg.html#user/../a');
+
+        $val = $this->helper->formatUrl('./abs/efg.html#user/../a', 'http://www.beanbun.org/are/you/ok');
+        $this->assertEquals($val, 'http://www.beanbun.org/are/you/ok/abs/efg.html#user/../a');
+
+        $val = $this->helper->formatUrl('/abs/efg?page=1&limit=20#user/a', 'http://www.beanbun.org/are/you/ok');
+        $this->assertEquals($val, 'http://www.beanbun.org/abs/efg?page=1&limit=20#user/a');
     }
 
     /**

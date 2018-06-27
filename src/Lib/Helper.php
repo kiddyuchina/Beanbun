@@ -60,38 +60,41 @@ class Helper
         }
 
         $originParsed = parse_url($origin);
-
+        // origin协议前缀
         $scheme = isset($originParsed['scheme']) ? $originParsed['scheme'] : '';
         if ($scheme != '') {
             $scheme .= '://';
         }
-
+        // origin host
         $host = isset($originParsed['host']) ? $originParsed['host'] : '';
         if (strlen($host) == 0) {
             return $href;
         }
         $host = $scheme . $host . '/';
 
-
         $hrefParsed = parse_url($href);
-
         if (isset($hrefParsed['scheme'])) {
             return $href;
         } else {
-            $path = isset($originParsed['path']) ? $originParsed['path'] : '';
+            // href path
+            $hrefPath = isset($hrefParsed['path']) ? $hrefParsed['path'] : '';
+            // href host
+            $hrefHost = isset($hrefParsed['host']) ? $hrefParsed['host'] : '';
 
-            if (isset($hrefParsed['fragment'])) {
-                $path = $hrefParsed['fragment'];
+            if (substr($href, 0, 2) == '//') {
+                $path = $hrefHost . $hrefPath;
+            } elseif (substr($href, 0 , 1) == '/') {
+                $path = $hrefPath;
             }
-            // 绝对路径
-            elseif ($href[0] == '/') {
-                $path = $href;
-            } else {
-                $path = $path . '/' . $href;
+            // 相对路径
+            else {
+                $originPath = isset($originParsed['path']) ? $originParsed['path'] : '';
+                $path       = $originPath . '/' . $hrefPath;
             }
 
+            // 分割做路劲处理
             $splitPath = explode('/', $path);
-            $splitBox = [];
+            $splitBox  = [];
             
             foreach($splitPath as $key => $value) {
                 if (empty($value)) {
@@ -107,7 +110,19 @@ class Helper
                 }
             }
 
-            return $host . implode($splitBox, '/');
+            // 拼接出转换之后的完整URL
+            $url = $host . implode($splitBox, '/');
+
+            // query_string参数
+            if (isset($hrefParsed['query'])) {
+                $url .= '?' . $hrefParsed['query'];
+            }
+            // route参数
+            if (isset($hrefParsed['fragment'])) {
+                $url .= '#' . $hrefParsed['fragment'];
+            }
+
+            return $url;
         }
     }
 
