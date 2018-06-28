@@ -124,6 +124,10 @@ class FormatUrlTest extends TestCase
         // case
         $val_1 = $this->helper->formatUrl('//abs/cde/../efg.html', 'https://www.beanbun.org/');
         $this->assertEquals($val_1, 'https://www.beanbun.org/abs/efg.html');
+
+        // case
+        $val_1 = $this->helper->formatUrl('//www.beanbun.org/cde/efg.html', 'https://www.beanbun.org/');
+        $this->assertEquals($val_1, 'https://www.beanbun.org/cde/efg.html');
     }
 
     /**
