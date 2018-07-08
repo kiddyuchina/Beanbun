@@ -38,57 +38,102 @@ class Helper
         preg_match_all($pattern, $html, $match);
         $match = array_merge($match[2], $match[3]);
         $hrefs = array_flip(array_flip(array_filter($match)));
-        foreach ($hrefs as $key => $href) {
-            $hrefs[$key] = self::formatUrl($href, $url);
+        foreach ($hrefs as &$href) {
+            $href = self::formatUrl($href, $url);
         }
+
         return array_flip(array_flip(array_filter($hrefs)));
     }
 
-    public static function formatUrl($l1, $l2)
+    /**
+     * 将抓取的链接格式化
+     *
+     * @param string $href
+     * @param string $seed
+     * @return string
+     */
+    public static function formatUrl($href, $seed)
     {
-        if (strlen($l1) > 0) {
-            $I1 = str_replace([chr(34), chr(39)], '', $l1);
+        $href = str_replace([chr(34), chr(39)], '', $href);
+        if (empty($href)) {
+            return $href;
+        }
+
+        $seedParsed = parse_url($seed);
+        // origin协议前缀
+        $seedScheme = isset($seedParsed['scheme']) ? $seedParsed['scheme'] : '';
+        if (!empty($seedScheme)) {
+            $seedScheme .= '://';
+        }
+        // origin host
+        $seedHost = isset($seedParsed['host']) ? $seedParsed['host'] : '';
+        if (empty($seedHost)) {
+            return $href;
+        }
+        $seedOrigin = $seedScheme . $seedHost . '/';
+
+        $hrefHostExist = false;
+
+        $hrefParsed = parse_url($href);
+        if (isset($hrefParsed['scheme'])) {
+            return $href;
         } else {
-            return $l1;
-        }
-        $url_parsed = parse_url($l2);
-        $scheme = $url_parsed['scheme'];
-        if ($scheme != '') {
-            $scheme .= '://';
-        }
-        $host = $url_parsed['host'];
-        $l3 = $scheme . $host;
-        if (strlen($l3) == 0) {
-            return $l1;
-        }
-        $path = dirname($url_parsed['path']);
-        if ($path[0] == '\\') {
-            $path = '';
-        }
-        $pos = strpos($I1, '#');
-        if ($pos > 0) {
-            $I1 = substr($I1, 0, $pos);
-        }
-        //判断类型
-        if (preg_match("/^(http|https|ftp):(\/\/|\\\\)(([\w\/\\\+\-~`@:%])+\.)+([\w\/\\\.\=\?\+\-~`@\':!%#]|(&)|&)+/i", $I1)) {
-            return $I1;
-        } elseif ($I1[0] == '/') {
-            return $I1 = $l3 . $I1;
-        } elseif (substr($I1, 0, 3) == '../') {
-            //相对路径
-            while (substr($I1, 0, 3) == '../') {
-                $I1 = substr($I1, strlen($I1) - (strlen($I1) - 3), strlen($I1) - 3);
-                if (strlen($path) > 0) {
-                    $path = dirname($path);
+            // href path
+            $hrefPath = isset($hrefParsed['path']) ? $hrefParsed['path'] : '';
+            // href host
+            $hrefHost = isset($hrefParsed['host']) ? $hrefParsed['host'] : '';
+
+            if (substr($href, 0, 2) == '//') {
+                if (preg_match('/([a-zA-Z0-9]+\.){2}[a-zA-z]+/i', $hrefHost)) {
+                    $hrefHostExist = true;
+                    $path = $hrefPath;
+                } else {
+                    $path = $hrefHost . $hrefPath;
+                }
+            } elseif (substr($href, 0 , 1) == '/') {
+                $path = $hrefPath;
+            }
+            // 相对路径
+            else {
+                $seedPath = isset($seedParsed['path']) ? $seedParsed['path'] : '';
+                $path     = $seedPath . '/' . $hrefPath;
+            }
+
+            // 分割做路劲处理
+            $splitPath = explode('/', $path);
+            $splitBox  = [];
+
+            foreach($splitPath as $key => $value) {
+                if (empty($value)) {
+                    continue;
+                }
+
+                if ($value == '.') {
+                    continue;
+                } elseif ($value == '..') {
+                    array_pop($splitBox);
+                } else {
+                    array_push($splitBox, $value);
                 }
             }
-            return $I1 = $path == '/' ? $l3 . $path . $I1 : $l3 . $path . "/" . $I1;
-        } elseif (substr($I1, 0, 2) == './') {
-            return $I1 = $l3 . $path . substr($I1, strlen($I1) - (strlen($I1) - 1), strlen($I1) - 1);
-        } elseif (strtolower(substr($I1, 0, 7)) == 'mailto:' || strtolower(substr($I1, 0, 11)) == 'javascript:') {
-            return false;
-        } else {
-            return $I1 = $l3 . $path . '/' . $I1;
+
+            // 拼接出转换之后的完整URL
+            if ($hrefHostExist) {
+                $url = $seedScheme . $hrefHost . '/' . implode($splitBox, '/');
+            } else {
+                $url = $seedOrigin . implode($splitBox, '/');
+            }
+
+            // query_string参数
+            if (isset($hrefParsed['query'])) {
+                $url .= '?' . $hrefParsed['query'];
+            }
+            // route参数
+            if (isset($hrefParsed['fragment'])) {
+                $url .= '#' . $hrefParsed['fragment'];
+            }
+
+            return $url;
         }
     }
 
