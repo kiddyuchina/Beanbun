@@ -63,6 +63,6 @@ $ php start.php
 ### 插件
 - beanbun-parser 数据抽取插件 https://github.com/kiddyuchina/beanbun-parser
   
-更多详细内容，请查看 [文档](http://www.beanbun.org)
+更多详细内容，请查看 [文档](https://github.com/kiddyuchina/Beanbun/blob/master/docs/chs/README.md)
 
 
