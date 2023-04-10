@@ -1,4 +1,4 @@
-<p align="center"><a href="https://github.com/kiddyuchina/Beanbun" target="_blank"><img width="200"src="http://otek15iea.bkt.clouddn.com/logo.jpg"></a></p>
+<p align="center"><a href="https://github.com/kiddyuchina/Beanbun" target="_blank"><img width="200"src="http://beanbun.colapanda.com/logo.jpg"></a></p>
  
  <p align="center">
   <a href="https://github.com/kiddyuchina/Beanbun/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square" alt="Build Status"></a>
@@ -14,6 +14,16 @@ Beanbun 是一个简单可扩展的爬虫框架，支持分布式，支持守护
 
 https://github.com/kiddyuchina/Beanbun/blob/master/docs/chs/README.md
 
+### 广告
+
+推荐一下最近发现的一个很好用的全球代理：[SmartProxy](https://www.smartproxy.cn/regist?invite=DX6M5P)  
+专业海外http代理商，有1亿真实住宅IP资源，覆盖全球，高匿稳定提供100%原生住宅IP，支持社交账户、电商平台、网络数据收集等服务。  
+匿名性很好，伪装度很高，IP限制问题轻松解决。  
+本人测试用过之后感觉很不错。  
+现春季价格优惠，动态住宅代理只要65折！  
+
+<a href="https://www.smartproxy.cn/regist?invite=DX6M5P" target="_blank"><img src="https://user-images.githubusercontent.com/29977021/228770306-6c5d0b8a-c381-4be3-b500-e43fc47298b3.png" width="200px"></a>
+
 ### 特点
 
 - 支持守护进程与普通两种模式（守护进程模式只支持 Linux 服务器）
@@ -26,7 +36,7 @@ https://github.com/kiddyuchina/Beanbun/blob/master/docs/chs/README.md
 - 爬取网页分为多步，每步均支持自定义动作（如添加代理、修改 user-agent 等）
 - 灵活的扩展机制，可方便的为框架制作插件：自定义队列、自定义爬取方式...
 
-<p align="center"><a href="https://github.com/kiddyuchina/Beanbun" target="_blank"><img src="http://otek15iea.bkt.clouddn.com/flow_3.jpg"></a></p>
+<p align="center"><a href="https://github.com/kiddyuchina/Beanbun" target="_blank"><img src="http://beanbun.colapanda.com/flow_3.jpg"></a></p>
 
 ### 安装
 
