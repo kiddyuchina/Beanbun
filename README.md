@@ -16,6 +16,18 @@ https://github.com/kiddyuchina/Beanbun/blob/master/docs/chs/README.md
 
 ### 广告
 
+<a href="https://www.ipwo.net/?ref=githubkidd" target="_blank"><img src="assets/ads/ipwo-banner.png" width="200px"></a>
+
+IPWO爬虫代理资源为采集、跨境与测试项目提供支持（免费试用，爬虫使用强烈推荐!!!）学习者务必遵循法律！  
+IPWO提供的真实住宅 IP，大幅降低被封禁风险。  
+195 + 国家 / 地区精准定位，轻松应对大型爬虫任务。让爬虫更简单，让数据更安全。戳本信息注册可获得有效保护账号的高匿名ip流量。  
+
+官网地址
+
+[访问IPWO官网](https://www.ipwo.net/?ref=githubkidd)
+
+---
+
 推荐一下最近发现的一个很好用的全球代理：[SmartProxy](https://www.smartproxy.cn/regist?invite=DX6M5P)  
 专业海外http代理商，有1亿真实住宅IP资源，覆盖全球，高匿稳定提供100%原生住宅IP，支持社交账户、电商平台、网络数据收集等服务。  
 匿名性很好，伪装度很高，IP限制问题轻松解决。  
