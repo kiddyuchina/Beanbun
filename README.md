@@ -16,7 +16,7 @@ https://github.com/kiddyuchina/Beanbun/blob/master/docs/chs/README.md
 
 ### 广告
 
-<a href="https://www.ipwo.net/?ref=githubkidd" target="_blank"><img src="assets/ads/ipwo-banner.png" width="200px"></a>
+<a href="https://www.ipwo.net/?ref=githubkidd" target="_blank"><img src="assets/ads/ipwo.png"></a>
 
 IPWO爬虫代理资源为采集、跨境与测试项目提供支持（免费试用，爬虫使用强烈推荐!!!）学习者务必遵循法律！  
 IPWO提供的真实住宅 IP，大幅降低被封禁风险。  
